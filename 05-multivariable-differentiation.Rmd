@@ -1,0 +1,761 @@
+# Functions of several variables and optimization with several variables {#multivariable-differentiation}
+
+```{r setup, cache = FALSE}
+library(tidyverse)
+library(patchwork)
+library(here)
+library(gganimate)
+library(plotly)
+library(animation)
+library(rayshader)
+```
+
+## Learning objectives {-}
+
+* Define a partial derivative
+* Identify higher order derivatives and partial derivatives
+* Define notation for calculus performed on vector and matrix forms
+* Demonstrate multivariable calculus methods on social scientific research
+* Calculate critical points, partial derivatives, and double integrals
+
+## Supplemental readings {-}
+
+* Chapter 14, @pemberton2015
+* [OpenStax Calculus: Volume 3, ch 4](https://openstax.org/details/books/calculus-volume-3)
+
+## Higher order derivatives
+
+The first derivative is applying the definition of derivatives on the function, and it can be expressed as
+
+$$f'(x),  ~~ y',  ~~ \frac{d}{dx}f(x), ~~ \frac{dy}{dx}$$
+
+We can keep applying the differentiation process to functions that are themselves derivatives.  The derivative of $f'(x)$ with respect to $x$, would then be $$f''(x)=\lim\limits_{h\to 0}\frac{f'(x+h)-f'(x)}{h}$$ and we can therefore call it the __Second derivative:__ 
+
+$$f''(x), ~~ y'', ~~ \frac{d^2}{dx^2}f(x), ~~ \frac{d^2y}{dx^2}$$
+
+Similarly, the derivative of $f''(x)$ would be called the third derivative and is denoted $f'''(x)$. And by extension, the __nth derivative__  is expressed as  $\frac{d^n}{dx^n}f(x)$, $\frac{d^ny}{dx^n}$.
+
+$$
+\begin{aligned}
+f(x) &=x^3\\
+f^{\prime}(x) &=3x^2\\
+f^{\prime\prime}(x) &=6x \\
+f^{\prime\prime\prime}(x) &=6\\
+f^{\prime\prime\prime\prime}(x) &=0\\
+\end{aligned}
+$$
+
+Earlier, we said that [if a function is differentiable at a given point, then it must be continuous](sequences-derivatives.html#continuity-and-derivatives). Further, if $f'(x)$ is itself continuous, then $f(x)$ is called **continuously differentiable**. All of this matters because many of our findings about optimization rely on differentiation, and so we want our function to be differentiable in as many layers.  A function that is continuously differentiable infinitely is called **smooth**. Some examples include:
+
+$$
+\begin{aligned}
+f(x) &= x^2 \\
+f(x) &= e^x
+\end{aligned}
+$$
+
+
+## Multivariate function
+
+A **multivariate function** is a function with more than one argument.
+
+##### Example 1
+
+$$f(x_{1}, x_{2}) = x_{1}  + x_{2}$$
+
+```{r multivariate-fun1}
+x1 <- seq(from = -5, to = 5, by = 0.1)
+x2 <- seq(from = -5, to = 5, by = 0.1)
+
+z <- expand.grid(x1 = x1,
+                 x2 = x2) %>%
+  as_tibble() %>%
+  mutate(y = x1 + x2)
+z <- matrix(data = z$y, nrow = length(x1), ncol = length(x2), byrow = TRUE)
+
+plot_ly(x = ~x1, y = ~x2, z = ~z) %>%
+  add_surface() %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "x1"),
+      yaxis = list(title = "x2"),
+      zaxis = list(title = "x1 + x2")
+    ))
+```
+
+##### Example 2
+
+$$f(x_{1}, x_{2}) = x_{1}^2 + x_{2}^2$$
+
+```{r multivariate-fun2}
+x1 <- seq(from = -5, to = 5, by = 0.1)
+x2 <- seq(from = -5, to = 5, by = 0.1)
+
+z <- expand.grid(x1 = x1,
+                 x2 = x2) %>%
+  as_tibble() %>%
+  mutate(y = x1^2 + x2^2)
+z <- matrix(data = z$y, nrow = length(x1), ncol = length(x2), byrow = TRUE)
+
+plot_ly(x = ~x1, y = ~x2, z = ~z) %>%
+  add_surface() %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "x1"),
+      yaxis = list(title = "x2"),
+      zaxis = list(title = "x1^2 + x2^2")
+    ))
+```
+
+##### Example 3
+
+$$f(x_{1}, x_{2}) = \sin(x_1)\cos(x_2)$$
+
+```{r multivariate-fun3}
+x1 <- seq(from = -5, to = 5, by = 0.1)
+x2 <- seq(from = -5, to = 5, by = 0.1)
+
+z <- expand.grid(x1 = x1,
+                 x2 = x2) %>%
+  as_tibble() %>%
+  mutate(y = sin(x1) * cos(x2))
+z <- matrix(data = z$y, nrow = length(x1), ncol = length(x2), byrow = TRUE)
+
+plot_ly(x = ~x1, y = ~x2, z = ~z) %>%
+  add_surface() %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "x1"),
+      yaxis = list(title = "x2"),
+      zaxis = list(title = "sin(x1) * cos(x2)")
+    ))
+```
+
+##### Example 4
+
+$$f(x_{1}, x_{2}) =  -(x-5)^2 - (y-2)^2$$
+
+```{r multivariate-fun4}
+x1 <- seq(from = -5, to = 5, by = 0.1)
+x2 <- seq(from = -5, to = 5, by = 0.1)
+
+z <- expand.grid(x1 = x1,
+                 x2 = x2) %>%
+  as_tibble() %>%
+  mutate(y = -(x1 - 5)^2 - (x2 - 2)^2)
+z <- matrix(data = z$y, nrow = length(x1), ncol = length(x2), byrow = TRUE)
+
+plot_ly(x = ~x1, y = ~x2, z = ~z) %>%
+  add_surface() %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "x1"),
+      yaxis = list(title = "x2"),
+      zaxis = list(title = "f(x1, x2)")
+    ))
+```
+
+##### Example 5
+
+$$f(x_{1}, x_{2}, x_{3} ) = x_1 + x_2 + x_3$$
+
+##### Example 6
+
+$$
+\begin{aligned}
+f(\mathbf{x} )&= f(x_{1}, x_{2}, \ldots, x_{N} ) \\
+							&= x_{1} +x_{2} + \ldots + x_{N} \\
+							&= \sum_{i=1}^{N} x_{i} 
+\end{aligned}
+$$
+
+### Definition
+
+::: {.definition name="Multivariate function"}
+Suppose $f:\Re^{n} \rightarrow \Re^{1}$.  We will call $f$ a multivariate function.  We will commonly write,
+
+$$f(\mathbf{x}) = f(x_{1}, x_{2}, x_{3}, \ldots, x_{n} )$$
+:::
+
+* $\Re^{n} = \Re \underbrace{\times}_{\text{cartesian}} \Re \times \Re \times \ldots \Re$
+* The function we consider will take $n$ inputs and output a single number (that lives in $\Re^{1}$, or the real line)
+
+### Evaluating multivariate functions
+
+::: {.example echo=TRUE}
+$$f(x_{1}, x_{2}, x_{3}) = x_1  + x_2 + x_3$$
+
+Evaluate at $\mathbf{x} = (x_{1}, x_{2}, x_{3}) = (2, 3, 2)$
+
+$$
+\begin{aligned}
+f(2, 3, 2) & = 2 + 3 + 2 \\
+			& = 7  
+\end{aligned}
+$$
+
+:::
+
+::: {.example echo=TRUE}
+$$f(x_{1}, x_{2} ) = x_{1} + x_{2} + x_{1} x_{2}$$
+
+Evaluate at $\mathbf{w} = (w_{1}, w_{2} ) = (1, 2)$ 
+
+$$
+\begin{aligned}
+f(w_{1}, w_{2}) & = w_{1} + w_{2} + w_{1} w_{2}  \\
+								& = 1  + 2  + 1 \times 2  \\
+								& = 5  
+\end{aligned}								
+$$			
+
+:::
+
+::: {.example name="Preferences for multidimensional policy"}
+Recall that in the [**spatial** model](critial-points.html#example-spatial-model), we suppose policy and political actors are located in a space. Suppose that policy is $N$ dimensional - or $\mathbf{x} \in \Re^{N}$. Suppose that legislator $i$'s utility is a $U:\Re^{N} \rightarrow \Re^{1}$ and is given by,
+
+$$
+\begin{aligned}
+U(\mathbf{x}) & = U(x_{1}, x_{2}, \ldots, x_{N} )  \\
+					& = - (x_{1} - \mu_{1} )^2 - (x_{2} - \mu_{2})^2 - \ldots - (x_{N} - \mu_{N})^{2} \\
+	& = -\sum_{j=1}^{N} (x_{j} - \mu_{j} )^{2}
+\end{aligned}							
+$$
+
+Suppose $\mathbf{\mu} = (\mu_{1}, \mu_{2}, \ldots, \mu_{N} ) = (0, 0, \ldots, 0)$. Evaluate legislator's utility for a policy proposal of $\mathbf{m} = (1, 1, \ldots, 1)$
+
+$$
+\begin{aligned}
+U(\mathbf{m} ) & = U(1, 1, \ldots, 1) \\
+						  & = - (1 - 0)^2 - (1- 0) ^2 - \ldots - (1- 0) ^2 \\
+				& = -\sum_{j=1}^{N} 1 = - N   \\
+\end{aligned} 
+$$
+
+:::
+
+::: {.example name="Regression models and randomized treatments"}
+Often we administer randomized experiments. The most recent wave of interest began with voter mobilization, and wonders if individual $i$ turns out to vote, $\text{Vote}_{i}$
+
+* $T = 1$ (treated): voter receives mobilization 
+* $T = 0$ (control): voter does not receive mobilization
+
+Suppose we find the following regression model, where $x_{2}$ is a participant's age:
+
+$$
+\begin{aligned}
+f(T,x_2) & = \Pr(\text{Vote}_{i} = 1 | T, x_{2} ) \\
+	& =   \beta_{0} + \beta_{1} T + \beta_{2} x_{2} 
+\end{aligned}
+$$
+
+We can calculate the effect of the experiment as:
+
+$$
+\begin{aligned}
+f(T = 1, x_2) - f(T=0, x_2) & = \beta_{0} + \beta_{1} 1  + \beta_{2} x_{2} - (\beta_{0} + \beta_{1}  0 + \beta_{2} x_{2}) \\
+& = \beta_{0} - \beta_{0}  + \beta_{1}(1 - 0) + \beta_{2}(x_{2} - x_{2} ) \\
+	& = \beta_{1} 
+\end{aligned}										
+$$
+
+:::
+
+## Multivariate derivatives
+
+What happens when there's more than one variable that is changing?
+
+```{block2, type = "rmdnote", echo = TRUE}
+If you can do ordinary derivatives, you can do partial derivatives: just hold all the other input variables constant except for the one with respect to which you are differentiating.
+```
+
+Suppose we have a function $f$ now of two (or more) variables and we want to determine the rate of change relative to one of the variables. To do so, we would find its partial derivative, which is defined similar to the derivative of a function of one variable. 
+
+::: {.definition name="Partial derivative"}
+Let $f$ be a function of the variables $(x_1,\ldots,x_n)$.  The partial derivative of $f$ with respect to $x_i$ is 
+
+$$\frac{\partial f}{\partial x_i} (x_1,\ldots,x_n) = \lim\limits_{h\to 0} \frac{f(x_1,\ldots,x_i+h,\ldots,x_n)-f(x_1,\ldots,x_i,\ldots,x_n)}{h}$$
+
+Only the $i$th variable changes --- the others are treated as constants.
+
+:::
+
+We can take higher-order partial derivatives, like we did with functions of a single variable, except now the higher-order partials can be with respect to multiple variables.
+
+Notice that you can take partials with regard to different variables. 
+
+Suppose $f(x,y)=x^2+y^2$. Then
+
+$$
+\begin{aligned}
+\frac{\partial f}{\partial x}(x,y) &= 2x \\
+\frac{\partial f}{\partial y}(x,y) &= 2y\\
+\frac{\partial^2 f}{\partial x^2}(x,y) &= 2\\
+\frac{\partial^2 f}{\partial x \partial y}(x,y) &= 0
+\end{aligned}
+$$
+
+Let $f(x,y)=x^3 y^4 +e^x -\log y$. What are the following partial derivaitves?
+
+$$
+\begin{aligned}
+\frac{\partial f}{\partial x}(x,y) &= 3x^2y^4 + e^x\\
+\frac{\partial f}{\partial y}(x,y) &=4x^3y^3 - \frac{1}{y}\\
+\frac{\partial^2 f}{\partial x^2}(x,y) &= 6xy^4 + e^x\\
+\frac{\partial^2 f}{\partial x \partial y}(x,y) &= 12x^2y^3
+\end{aligned}
+$$
+
+::: {.example name="Rate of change, linear regression"}
+Suppose we regress $\text{Approval}_{i}$ rate for Trump in month $i$ on $\text{Employ}_{i}$ and $\text{Gas}_{i}$. We obtain the following model:
+
+$$\text{Approval}_{i} = 0.8  -0.5 \text{Employ}_{i}  -0.25 \text{Gas}_{i}$$
+
+We are modeling $\text{Approval}_{i} = f(\text{Employ}_{i}, \text{Gas}_{i} )$. What is the partial derivative with respect to employment?
+
+$$\frac{\partial f(\text{Employ}_{i}, \text{Gas}_{i} ) }{\partial \text{Employ}_{i} } = -0.5$$
+
+:::
+
+## Multivariate optimization
+
+Just as we want to [optimize functions with a single variable](critial-points.html#framework-for-analytical-optimization), we often wish to opimize functions with multiple variables.
+
+* Parameters $\mathbf{\beta} = (\beta_{1}, \beta_{2}, \ldots, \beta_{n} )$ such that $f(\mathbf{\beta}| \mathbf{X}, \mathbf{Y})$ is maximized
+* Policy $\mathbf{x} \in \Re^{n}$ that maximizes $U(\mathbf{x})$
+* Weights $\mathbf{\pi} = (\pi_{1}, \pi_{2}, \ldots, \pi_{K})$ such that a weighted average of forecasts $\mathbf{f}  =  (f_{1} , f_{2}, \ldots, f_{k})$ have minimum loss
+
+    $$\min_{\mathbf{\pi}} = - (\sum_{j=1}^{K} \pi_{j} f_{j}  - y ) ^ 2$$
+
+As before, we will consider both analytic and computational approaches.
+
+### Differences from single variable optimization procedure
+
+It is the same basic approach, except we have multiple parameters of interest. This requires more explicit knowledge of linear algebra to track all the components and optimize over the multidimensional space
+
+Let $\mathbf{x} \in \Re^{n}$ and let $\delta >0$.  Define a **neighborhood** of $\mathbf{x}$, $B(\mathbf{x}, \delta)$, as the set of points such that,
+
+$$B(\mathbf{x}, \delta) = \{ \mathbf{y} \in \Re^{n} : ||\mathbf{x} - \mathbf{y}||< \delta \}$$
+
+* That is, $B(\mathbf{x}, \delta)$ is the set of points where the vector $\mathbf{y}$ is a vector in n-dimensional space such that vector norm of $\mathbf{x} - \mathbf{y}$  is less than $\delta$
+* So the neighborhood is at most $\delta$ big
+
+Now suppose $f:X \rightarrow \Re$ with $X \subset \Re^{n}$. A vector $\mathbf{x}^{*} \in X$ is a **global maximum** if , for all other $\mathbf{x} \in X$
+
+$$f(\mathbf{x}^{*}) > f(\mathbf{x} )$$
+
+A vector $\mathbf{x}^{\text{local}}$ is a **local** maximum if there is a neighborhood around $\mathbf{x}^{\text{local}}$, $Q \subset X$ such that, for all $x \in Q$,
+
+$$f(\mathbf{x}^{\text{local} }) > f(\mathbf{x} )$$
+
+The maximum and minimum values of a function $f:X \rightarrow \Re$ on the real number line (in n-dimensional space) will fall somewhere along $X$. This is the same as we saw previously, except now $X$ is not a scalar value - it is a vector $\mathbf{X}$.
+
+### First derivative test: Gradient
+
+Suppose $f:X \rightarrow \Re^{n}$ with $X \subset \Re^{1}$ is a differentiable function. Define the **gradient** vector of $f$ at $\mathbf{x}_{0}$, $\nabla f(\mathbf{x}_{0})$ as
+
+$$\nabla f (\mathbf{x}_{0}) = \left(\frac{\partial f (\mathbf{x}_{0}) }{\partial x_{1} }, \frac{\partial f (\mathbf{x}_{0}) }{\partial x_{2} }, \frac{\partial f (\mathbf{x}_{0}) }{\partial x_{3} }, \ldots, \frac{\partial f (\mathbf{x}_{0}) }{\partial x_{n} } \right)$$
+
+* It is the first partial derivatives for each variable $x_n$ stored in a vector
+* Gradient points in the direction that the function is **increasing** in the fastest direction
+
+So if $\mathbf{a} \in X$ is a **local** extremum, then, 
+
+$$
+\begin{aligned}
+\nabla f(\mathbf{a}) &= \mathbf{0}  \\
+									&= (0, 0, \ldots, 0)  				
+\end{aligned}
+$$
+
+That is, the root(s) of the gradient are where $f(\mathbf{a})$ equals $\mathbf{0}$ in $n$-dimensional space.
+
+::: {.example echo=TRUE}
+
+$$
+\begin{aligned}
+f(x,y) &= x^2+y^2 \\
+\nabla f(x,y) &= (2x, \, 2y)
+\end{aligned}
+$$
+
+:::
+
+::: {.example echo=TRUE}
+
+$$
+\begin{aligned}
+f(x,y) &= x^3 y^4 +e^x -\log y \\
+\nabla f(x,y) &= (3x^2 y^4 + e^x, \, 4x^3y^3 - \frac{1}{y})
+\end{aligned}
+$$
+
+:::
+
+#### Critical points
+
+We can have **critical points**:
+
+1. Maximum
+1. Minimum
+1. Saddle point
+
+In order to know if we are at a maximum/minimum/saddle point, we need to perform the **second derivative test**.
+
+### Second derivative test: Hessian
+
+Suppose $f:X \rightarrow \Re^{1}$ , $X \subset \Re^{n}$, with $f$ a twice differentiable function.  We will define the **Hessian** matrix as the matrix of second derivatives at $\mathbf{x}^{*} \in X$,
+
+$$
+\mathbf{H}(f)(\mathbf{x}^{*} ) = \begin{bmatrix} 
+		\frac{\partial^{2} f }{\partial x_{1} \partial x_{1} } (\mathbf{x}^{*} ) & \frac{\partial^{2} f }{\partial x_{1} \partial x_{2} } (\mathbf{x}^{*} ) & \ldots & \frac{\partial^{2} f }{\partial x_{1} \partial x_{n} } (\mathbf{x}^{*} ) \\
+		\frac{\partial^{2} f }{\partial x_{2} \partial x_{1} } (\mathbf{x}^{*} ) & \frac{\partial^{2} f }{\partial x_{2} \partial x_{2} } (\mathbf{x}^{*} ) & \ldots & \frac{\partial^{2} f }{\partial x_{2} \partial x_{n} } (\mathbf{x}^{*} ) \\
+		\vdots & \vdots & \ddots & \vdots \\
+		\frac{\partial^{2} f }{\partial x_{n} \partial x_{1} } (\mathbf{x}^{*} ) & \frac{\partial^{2} f }{\partial x_{n} \partial x_{2} } (\mathbf{x}^{*} ) & \ldots & \frac{\partial^{2} f }{\partial x_{n} \partial x_{n} } (\mathbf{x}^{*} ) \\
+\end{bmatrix}  
+$$
+
+Hessians are symmetric, and they describe the **curvature** of the function (think, how bended). To calculate the hessian, you must differentiate on the entire gradient with respect to each $x_n$.
+
+::: {.example echo=TRUE}
+$$
+\begin{aligned}
+f(x,y) &= x^2+y^2 \\
+\nabla f(x,y) &= (2x, \, 2y) \\
+\mathbf{H}(f)(x,y) &= \begin{bmatrix}
+2 & 0 \\
+0 & 2
+\end{bmatrix}
+\end{aligned}
+$$
+
+:::
+
+::: {.example echo=TRUE}
+$$
+\begin{aligned}
+f(x,y) &= x^3 y^4 +e^x -\log y \\
+\nabla f(x,y) &= (3x^2 y^4 + e^x, \, 4x^3y^3 - \frac{1}{y}) \\
+\mathbf{H}(f)(x,y) &= \begin{bmatrix}
+6xy^4 + e^x & 12x^2y^3 \\
+12x^2y^3 & 12x^3y^2 + \frac{1}{y^2}
+\end{bmatrix}
+\end{aligned}
+$$
+
+:::
+
+#### Definiteness of a matrix
+
+Consider $n \times n$ matrix $\mathbf{A}$.  If, for all $\mathbf{x} \in \Re^{n}$ where $\mathbf{x} \neq \mathbf{0}$:
+
+$$
+\begin{aligned}
+\mathbf{x}^{'} \mathbf{A} \mathbf{x} &> 0, \quad \mathbf{A} \text{ is positive definite} \\
+\mathbf{x}^{'} \mathbf{A} \mathbf{x} &< 0, \quad \mathbf{A} \text{ is negative definite } 
+\end{aligned}
+$$
+
+If $\mathbf{x}^{'} \mathbf{A} \mathbf{x} >0$ for some $\mathbf{x}$ and $\mathbf{x}^{'} \mathbf{A} \mathbf{x}<0$ for other $\mathbf{x}$, then we say $\mathbf{A}$ is indefinite.
+
+```{block2, type="rmdnote", echo=TRUE}
+$\mathbf{x}$ is a vector of the appropriate length (can be any vector drawn from $\Re^n$ space), so a transposed vector times a matrix times a vector will result in a scalar value
+```
+
+#### Second derivative test
+
+* If $\mathbf{H}(f)(\mathbf{a})$ is positive definite then $\mathbf{a}$ is a local minimum 
+* If $\mathbf{H}(f)(\mathbf{a})$ is negative definite then $\mathbf{a}$ is a local maximum 
+* If $\mathbf{H}(f)(\mathbf{a})$ is indefinite then $\mathbf{a}$ is a saddle point
+
+#### Use the determinant to assess definiteness
+
+How do we measure definiteness when up until now $\mathbf{x}$ could be any vector? We can use the **determinant** of the Hessian of $f$ at the critical value $\mathbf{a}$:
+
+$$
+\mathbf{H}(f)(\mathbf{a}) = \begin{bmatrix} 
+	A & B \\
+	B & C \\
+\end{bmatrix} 
+$$
+
+The determinant for a $2 \times 2$ matrix can easily be calculated using the known formula $AC - B^2$.
+
+* $AC - B^2> 0$ and $A>0$ $\leadsto$ positive definite $\leadsto$ $\mathbf{a}$ is a local minimum 
+* $AC - B^2> 0$ and $A<0$ $\leadsto$ negative definite $\leadsto$ $\mathbf{a}$ is a local maximum
+* $AC - B^2<0$ $\leadsto$ indefinite $\leadsto$ saddle point 
+* $AC- B^2 = 0$ inconclusive
+
+### Basic procedure summarized
+
+1. Calculate gradient
+1. Set equal to zero, solve system of equations
+1. Calculate Hessian
+1. Assess Hessian at critical values
+1. Boundary values?  (if relevant)
+
+## A simple optimization example
+
+Suppose $f:\Re^{2} \rightarrow \Re$ with 
+
+$$f(x_{1}, x_{2}) = 3(x_1 + 2)^2  + 4(x_{2}  + 4)^2  $$
+
+Calculate gradient:
+
+$$
+\begin{aligned}
+\nabla f(\mathbf{x}) &= (6 x_{1} + 12 , 8x_{2} + 32 )  \\
+\mathbf{0} &= (6 x_{1}^{*} + 12 , 8x_{2}^{*} + 32 )  
+\end{aligned}
+$$
+
+We now solve the system of equations to yield
+
+$$x_{1}^{*}  = - 2, \quad x_{2}^{*}  = -4$$
+
+$$
+\textbf{H}(f)(\mathbf{x}^{*}) = \begin{bmatrix}
+6 & 0 \\
+0 & 8 \\
+\end{bmatrix} 
+$$
+
+$\det(\textbf{H}(f)(\mathbf{x}^{*}))$ = 48 and $6>0$ so $\textbf{H}(f)(\mathbf{x}^{*})$ is positive definite. $\mathbf{x^{*}}$ is a **local minimum**.
+
+## Maximum likelihood estimation for a normal distribution
+
+Suppose that we draw an independent and identically distributed random sample of $n$ observations from a normal distribution,
+
+$$
+\begin{aligned}
+Y_{i} &\sim \text{Normal}(\mu, \sigma^2)  \\  
+\mathbf{Y} &= (Y_{1}, Y_{2}, \ldots, Y_{n} )   
+\end{aligned}
+$$
+
+Our task:
+
+* Obtain likelihood (summary estimator)
+* Derive maximum likelihood estimators for $\mu$ and $\sigma^2$
+
+$$
+\begin{aligned}
+L(\mu, \sigma^2 | \mathbf{Y} ) &\propto \prod_{i=1}^{n} f(Y_{i}|\mu, \sigma^2) \\  
+&\propto  \prod_{i=1}^{N} \frac{\exp[ - \frac{ (Y_{i} - \mu)^2 }{2\sigma^2} ]}{\sqrt{2 \pi \sigma^2}} \\
+&\propto \frac{\exp[ -\sum_{i=1}^{n} \frac{(Y_{i} - \mu)^2}{2\sigma^2}  ]}{ (2\pi)^{n/2} \sigma^{2n/2} }
+ \end{aligned}
+$$
+ 
+Taking the logarithm, we have
+
+$$l(\mu, \sigma^2|\mathbf{Y} ) = -\sum_{i=1}^{n} \frac{(Y_{i} - \mu)^2}{2\sigma^2} - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log (\sigma^2)$$
+
+Let's find $\widehat{\mu}$ and $\widehat{\sigma}^{2}$ that maximizes log-likelihood.
+
+$$
+\begin{aligned}
+l(\mu, \sigma^2|\mathbf{Y} ) &=  -\sum_{i=1}^{n} \frac{(Y_{i} - \mu)^2}{2\sigma^2} - \frac{n}{2} \log (\sigma^2) \\
+\frac{\partial l(\mu, \sigma^2)|\mathbf{Y} )}{\partial \mu }  &= \sum_{i=1}^{n} \frac{2(Y_{i} - \mu)}{2\sigma^2} \\
+\frac{\partial l(\mu, \sigma^2)|\mathbf{Y})}{\partial \sigma^2} &=  -\frac{n}{2\sigma^2}  + \frac{1}{2\sigma^4} \sum_{i=1}^{n} (Y_{i} - \mu)^2
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+0 &= -\sum_{i=1}^{n} \frac{2(Y_{i} - \widehat{\mu})}{2\widehat{\sigma}^2} \\
+0 &=  -\frac{n}{2\widehat{\sigma}^2 }  + \frac{1}{2\widehat{\sigma}^4} \sum_{i=1}^{n} (Y_{i} - \mu^{*})^2 
+\end{aligned}
+$$
+
+Solving for $\widehat{\mu}$ and $\widehat{\sigma}^2$ yields,
+
+$$
+\begin{aligned}
+\widehat{\mu} &= \frac{\sum_{i=1}^{n} Y_{i} }{n} \\
+\widehat{\sigma}^{2} &= \frac{1}{n} \sum_{i=1}^{n} (Y_{i} - \overline{Y})^2
+\end{aligned}
+$$
+
+$$
+\textbf{H}(f)(\widehat{\mu}, \widehat{\sigma}^2)  = 
+ \begin{bmatrix} 
+\frac{\partial^{2} l(\mu, \sigma^2|\mathbf{Y} )}{\partial \mu^{2}} & \frac{\partial^{2} l(\mu, \sigma^2|\mathbf{Y} )}{\partial \sigma^{2} \partial \mu} \\
+\frac{\partial^{2} l(\mu, \sigma^2|\mathbf{Y} )}{\partial \sigma^{2} \partial \mu} & \frac{\partial^{2} l(\mu, \sigma^2|\mathbf{Y} )}{\partial^{2} \sigma^{2}} 
+\end{bmatrix}
+$$
+
+Taking derivatives and evaluating at MLE's yields,
+
+$$
+\textbf{H}(f)(\widehat{\mu}, \widehat{\sigma}^2) = \begin{bmatrix} \frac{-n}{\widehat{\sigma}^2} & 0 \\
+0 & \frac{-n}{2(\widehat{\sigma}^2)^2}  \\
+\end{bmatrix}
+$$
+
+* $\text{det}(\textbf{H}(f)(\widehat{\mu}, \widehat{\sigma}^2)) = \dfrac{n^2}{2(\widehat{\sigma}^2)^3} > 0$ and $A = \dfrac{-n}{\widehat{\sigma}^2} < 0$ $\leadsto$ maximum
+* Determinant is greater than 0 and $A$ is less than zero - local maximum
+
+## Computational optimization procedures
+
+As the previous example suggests, analytical approaches can be difficult or impossible for many multivariate functions. Computational approaches simplify the problem.
+
+### Multivariate Newton-Raphson
+
+Suppose $f:\Re^{n} \rightarrow \Re$.  Suppose we have guess $\mathbf{x}_{t}$. Then our update is:
+
+$$\mathbf{x}_{t+1} = \mathbf{x}_{t} - [\textbf{H}(f)(\mathbf{x}_{t})]^{-1} \nabla f(\mathbf{x}_{t})$$
+
+* Approximate function with **tangent plane**
+* Find value of $x_{t+1}$ that makes the plane equal to zero
+* Update again
+
+#### Drawbacks
+
+* Expensive to calculate (requires inverting Hessian)
+* Very sensitive to starting points
+
+### Grid search
+
+* Example: MLE for a normal distribution
+* In R, I drew 10,000 realizations from $Y_{i} \sim \text{Normal}(0.25, 100)$
+* Used realized values $y_{i}$ to evaluate $l(\mu, \sigma^2| \mathbf{y} )$ across a range of values
+* Computationally inefficient - have to try a large number of combinations of parameters
+
+```{r loglik}
+log.like <- function(mu, sigma.2, y) {
+  part1 <- -(1 / (2 * sigma.2)) * sum((y - mu)^2)
+  part2 <- -(length(y) / 2) * log(sigma.2)
+  out <- part1 + part2
+  return(out)
+}
+
+x <- rnorm(n = 10000, mean = 0.25, sd = 10)
+
+grid_search_plot <- expand.grid(
+  mu = seq(-2, 2, by = .05),
+  sigma2 = seq(8^2, 12^2, by = .1)
+) %>%
+  as_tibble() %>%
+  mutate(logLik = map2_dbl(mu, sigma2, log.like, y = x)) %>%
+  ggplot(aes(mu, sigma2, fill = logLik)) +
+  geom_raster() +
+  geom_contour(aes(z = logLik)) +
+  scale_fill_continuous(type = "viridis") +
+  labs(
+    x = expression(mu),
+    y = expression(sigma^2)
+  )
+grid_search_plot
+```
+
+### Gradient descent
+
+Same approach as [before](critial-points.html#gradient-descent), but now the derivative is a vector (i.e. gradient, hence the name of the approach "gradient" descent).
+
+$$f(x, y) = x^2 + 2y^2$$
+
+```{r grad-descent, animation.hook="gifski"}
+# hacked version from animation::grad.desc()
+grad.desc <- function(
+  FUN = function(x, y) x^2 + 2 * y^2, rg = c(-3, -3, 3, 3), init = c(-3, 3),
+  gamma = 0.05, tol = 0.001, gr = NULL, len = 50, interact = FALSE,
+  col.contour = "red", col.arrow = "blue", main) {
+  nmax <- ani.options("nmax")
+  x <- seq(rg[1], rg[3], length = len)
+  y <- seq(rg[2], rg[4], length = len)
+  nms <- names(formals(FUN))
+  grad <- if (is.null(gr)) {
+    deriv(as.expression(body(FUN)), nms, function.arg = TRUE)
+  } else {
+    function(...) {
+      res <- FUN(...)
+      attr(res, "gradient") <- matrix(gr(...), nrow = 1, ncol = 2)
+      res
+    }
+  }
+
+  z <- outer(x, y, FUN)
+
+  xy <- if (interact) {
+    contour(x, y, z,
+      col = "red", xlab = nms[1], ylab = nms[2],
+      main = "Choose initial values by clicking on the graph"
+    )
+    unlist(locator(1))
+  } else {
+    init
+  }
+
+  newxy <- xy - gamma * attr(grad(xy[1], xy[2]), "gradient")
+  gap <- abs(FUN(newxy[1], newxy[2]) - FUN(xy[1], xy[2]))
+  if (!is.finite(gap)) stop("Could not find any local minimum! Please check the input function and arguments.")
+  if (missing(main)) main <- eval(substitute(expression(z == x), list(x = body(FUN))))
+
+  i <- 1
+
+  while (gap > tol && i <= nmax) {
+    # dev.hold()
+    # contour(x, y, z, col = col.contour, xlab = nms[1], ylab = nms[2], main = main)
+    xy <- rbind(xy, newxy[i, ])
+    newxy <- rbind(newxy, xy[i + 1, ] - gamma * attr(grad(xy[i + 1, 1], xy[i + 1, 2]), "gradient"))
+    # arrows(xy[1:i, 1], xy[1:i, 2], newxy[1:i, 1], newxy[1:i, 2],
+    #   length = par("din")[1] / 50, col = col.arrow
+    # )
+    if (!is.finite(gap)) stop("Could not find any local minimum! Please check the input function and arguments.")
+    gap <- abs(FUN(newxy[i + 1, 1], newxy[i + 1, 2]) - FUN(xy[i + 1, 1], xy[i + 1, 2]))
+    # ani.pause()
+    i <- i + 1
+    if (i > nmax) warning("Maximum number of iterations reached!")
+  }
+
+  return(
+    list(
+      par = newxy[1:i - 1, ], value = FUN(newxy[i - 1, 1], newxy[i - 1, 2]),
+      iter = i - 1, gradient = grad
+    )
+  )
+}
+
+# function to optimize
+optim_func <- function(x, y) x^2 + 2 * y^2
+optim_func_vals <- grad.desc(FUN = optim_func)
+
+# combine results
+optim_results <- optim_func_vals$par %>%
+  as_tibble() %>%
+  mutate(iter = row_number())
+
+# grid of values
+optim_grid <- expand.grid(
+  x = seq(-4, 4, by = .05),
+  y = seq(-4, 4, by = .05)
+) %>%
+  as_tibble() %>%
+  mutate(z = optim_func(x, y))
+
+for (i in 1:nrow(optim_results)) {
+  # slice the first i iterations
+  optim_results_plot <- optim_results %>%
+    slice_head(n = i) %>%
+    mutate(most_recent = iter == max(iter))
+
+  # generate plot
+  optim_plot <- ggplot(data = optim_grid, mapping = aes(x = x, y = y)) +
+    geom_raster(mapping = aes(fill = z), interpolate = TRUE) +
+    geom_point(data = optim_results_plot, mapping = aes(color = most_recent)) +
+    scale_fill_viridis_c(guide = FALSE) +
+    scale_color_manual(values = c("red", "white"), guide = FALSE) +
+    labs(
+      title = expression(f(x, y) == x^2 + 2 * y^2),
+      subtitle = expression(alpha == 0.05),
+      x = expression(X),
+      y = expression(Y)
+    ) +
+    theme(axis.ticks = element_blank(),
+          panel.grid = element_blank())
+
+  # render for 3d
+  plot_gg(optim_plot, multicore = TRUE, width = 5, height = 5, windowsize = c(1400, 866), zoom = .65)
+  render_snapshot(clear = TRUE)
+}
+```

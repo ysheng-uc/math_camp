@@ -1,0 +1,758 @@
+# Functions of several variables and optimization with several variables {#multivariable-differentiation}
+
+```{r setup}
+library(tidyverse)
+library(patchwork)
+library(here)
+library(gganimate)
+library(rayshader)
+```
+
+## Learning objectives {-}
+
+* Define a partial derivative
+* Identify higher order derivatives and partial derivatives
+* Define notation for calculus performed on vector and matrix forms
+* Demonstrate multivariable calculus methods on social scientific research
+* Calculate critical points, partial derivatives, and double integrals
+
+## Assigned readings {-}
+
+* Pemberton and Rau, ch 14,
+
+## Higher order derivatives
+
+The first derivative is applying the definition of derivatives on the function, and it can be expressed as
+
+$$f'(x),  ~~ y',  ~~ \frac{d}{dx}f(x), ~~ \frac{dy}{dx}$$
+
+We can keep applying the differentiation process to functions that are themselves derivatives.  The derivative of $f'(x)$ with respect to $x$, would then be $$f''(x)=\lim\limits_{h\to 0}\frac{f'(x+h)-f'(x)}{h}$$ and we can therefore call it the __Second derivative:__ 
+
+$$f''(x), ~~ y'', ~~ \frac{d^2}{dx^2}f(x), ~~ \frac{d^2y}{dx^2}$$
+
+Similarly, the derivative of $f''(x)$ would be called the third derivative and is denoted $f'''(x)$. And by extension, the __nth derivative__  is expressed as  $\frac{d^n}{dx^n}f(x)$, $\frac{d^ny}{dx^n}$.
+
+$$
+\begin{aligned}
+f(x) &=x^3\\
+f^{\prime}(x) &=3x^2\\
+f^{\prime\prime}(x) &=6x \\
+f^{\prime\prime\prime}(x) &=6\\
+f^{\prime\prime\prime\prime}(x) &=0\\
+\end{aligned}
+$$
+
+Earlier, we said that if a function differentiable at a given point, then it must be continuous. Further, if $f'(x)$ is itself continuous, then $f(x)$ is called **continuously differentiable**. All of this matters because many of our findings about optimization rely on differentiation, and so we want our function to be differentiable in as many layers.  A function that is continuously differentiable infinitly is called "smooth". Some examples: $f(x) = x^2$, $f(x) = e^x$. 
+
+## Multivariate function
+
+$$f(x_{1}, x_{2}) = x_{1}  + x_{2}$$
+
+```{r multivariate-fun1, include = FALSE}
+z <- expand.grid(x1 = seq(from = -5, to = 5, by = 0.01),
+            x2 = seq(from = -5, to = 5, by = 0.1)) %>%
+  as_tibble() %>%
+  mutate(y = x1 + x2)
+
+gg <- ggplot(data = z, aes(x = x1, y = x2, z = y, fill = y)) +
+  geom_raster() +
+  scale_fill_viridis_c() +
+  labs(x = expression(x[1]),
+       y = expression(x[2])) +
+  theme(axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+plot_gg(gg, multicore = TRUE, height = 8, width = 8)
+render_movie(filename = "images/multivar-1")
+```
+
+![](images/multivar-1.mp4)
+
+$$f(x_{1}, x_{2}) = x_{1}^2 + x_{2}^2$$
+
+```{r multivariate-fun2, include = FALSE}
+z <- expand.grid(x1 = seq(from = -5, to = 5, by = 0.01),
+            x2 = seq(from = -5, to = 5, by = 0.1)) %>%
+  as_tibble() %>%
+  mutate(y = x1^2 + x2^2)
+
+gg <- ggplot(data = z, aes(x = x1, y = x2, z = y, fill = y)) +
+  geom_raster() +
+  scale_fill_viridis_c() +
+  labs(x = expression(x[1]),
+       y = expression(x[2])) +
+  theme(axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+plot_gg(gg, multicore = TRUE, height = 8, width = 8)
+render_movie(filename = "images/multivar-2")
+```
+
+![](images/multivar-2.mp4)
+
+$$f(x_{1}, x_{2}) = \sin(x_1)\cos(x_2)$$
+
+```{r multivariate-fun3, include = FALSE}
+z <- expand.grid(x1 = seq(from = -5, to = 5, by = 0.01),
+            x2 = seq(from = -5, to = 5, by = 0.1)) %>%
+  as_tibble() %>%
+  mutate(y = sin(x1) * cos(x2))
+
+gg <- ggplot(data = z, aes(x = x1, y = x2, z = y, fill = y)) +
+  geom_raster() +
+  scale_fill_viridis_c() +
+  labs(x = expression(x[1]),
+       y = expression(x[2])) +
+  theme(axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+plot_gg(gg, multicore = TRUE, height = 8, width = 8)
+render_movie(filename = "images/multivar-3")
+```
+
+![](images/multivar-3.mp4)
+
+$$f(x_{1}, x_{2}) =  -(x-5)^2 - (y-2)^2$$
+
+```{r multivariate-fun4, include = FALSE}
+z <- expand.grid(x1 = seq(from = -5, to = 5, by = 0.01),
+            x2 = seq(from = -5, to = 5, by = 0.1)) %>%
+  as_tibble() %>%
+  mutate(y = -(x1 - 5)^2 - (x2 - 2)^2)
+
+gg <- ggplot(data = z, aes(x = x1, y = x2, z = y, fill = y)) +
+  geom_raster() +
+  scale_fill_viridis_c() +
+  labs(x = expression(x[1]),
+       y = expression(x[2])) +
+  theme(axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+plot_gg(gg, multicore = TRUE, height = 8, width = 8)
+render_movie(filename = "images/multivar-4")
+```
+
+![](images/multivar-4.mp4)
+
+$$f(x_{1}, x_{2}, x_{3} ) = x_1 + x_2 + x_3$$
+
+$$
+\begin{aligned}
+f(\boldsymbol{x} )&= f(x_{1}, x_{2}, \ldots, x_{N} ) \\
+							&= x_{1} +x_{2} + \ldots + x_{N} \\
+							&= \sum_{i=1}^{N} x_{i} 
+\end{aligned}
+$$
+
+```{definition, echo = TRUE, name = "Multivariate function"}
+Suppose $f:\Re^{n} \rightarrow \Re^{1}$.  We will call $f$ a multivariate function.  We will commonly write,
+
+$$f(\boldsymbol{x}) = f(x_{1}, x_{2}, x_{3}, \hdots, x_{n} )$$
+```
+
+* $\Re^{n} = \Re \underbrace{\times}_{\text{cartesian}} \Re \times \Re \times \ldots \Re $
+* The function we consider will take $n$ inputs and output a single number (that lives in $\Re^{1}$, or the real line)
+
+### Evaluating multivariate functions
+
+#### Example 1
+
+$$f(x_{1}, x_{2}, x_{3}) = x_1  + x_2 + x_3$$
+
+Evaluate at $\boldsymbol{x} = (x_{1}, x_{2}, x_{3}) = (2, 3, 2)$
+
+$$
+\begin{aligned}
+f(2, 3, 2) & = 2 + 3 + 2 \\
+			& = 7  
+\end{aligned}
+$$
+
+#### Example 2
+
+$$f(x_{1}, x_{2} ) = x_{1} + x_{2} + x_{1} x_{2}$$
+
+* Evaluate at $\boldsymbol{w} = (w_{1}, w_{2} ) = (1, 2)$ 
+
+$$
+\begin{aligned}
+f(w_{1}, w_{2}) & = w_{1} + w_{2} + w_{1} w_{2}  \\
+								& = 1  + 2  + 1 \times 2  \\
+								& = 5  
+\end{aligned}								
+$$						
+
+#### Preferences for Multidimensional Policy
+
+* Recall that in the **spatial** model, we suppose policy and political actors are located in a space
+* Suppose that policy is $N$ dimensional - or $\boldsymbol{x} \in \Re^{N}$
+* Suppose that legislator $i$'s utility is a $U:\Re^{N} \rightarrow \Re^{1}$ and is given by,
+
+$$
+\begin{aligned}
+U(\boldsymbol{x}) & = U(x_{1}, x_{2}, \ldots, x_{N} )  \\
+					& = - (x_{1} - \mu_{1} )^2 - (x_{2} - \mu_{2})^2 - \ldots - (x_{N} - \mu_{N})^{2} \\
+	& = -\sum_{j=1}^{N} (x_{j} - \mu_{j} )^{2}
+\end{aligned}							
+$$
+
+* Suppose $\boldsymbol{\mu} = (\mu_{1}, \mu_{2}, \ldots, \mu_{N} ) = (0, 0, \ldots, 0)$
+* Evaluate legislator's utility for a policy proposal of $\boldsymbol{m} = (1, 1, \hdots, 1)$
+
+$$
+\begin{aligned}
+U(\boldsymbol{m} ) & = U(1, 1, \ldots, 1) \\
+						  & = - (1 - 0)^2 - (1- 0) ^2 - \ldots - (1- 0) ^2 \\
+				& = -\sum_{j=1}^{N} 1 = - N   \\
+\end{aligned} 
+$$
+
+#### Regression models and randomized treatments
+
+* Often we administer randomized experiments
+* The most recent wave of interest began with voter mobilization, and wonder if individual $i$ turns out to vote, $\text{Vote}_{i}$}
+    * $T = 1$ (treated): voter receives mobilization 
+    * $T = 0$ (control): voter does not receive mobilization
+* Suppose we find the following regression model, where $x_{2}$ is a participant's age:
+
+    $$
+    \begin{aligned}
+    f(T,x_2) & = \Pr(\text{Vote}_{i} = 1 | T, x_{2} ) \\
+    	& =   \beta_{0} + \beta_{1} T + \beta_{2} x_{2} 
+    \end{aligned}
+    $$
+
+* We can calculate the effect of the experiment as:
+
+$$
+\begin{aligned}
+f(T = 1, x_2) - f(T=0, x_2) & = \beta_{0} + \beta_{1} 1  + \beta_{2} x_{2} - (\beta_{0} + \beta_{1}  0 + \beta_{2} x_{2}) \\
+& = \beta_{0} - \beta_{0}  + \beta_{1}(1 - 0) + \beta_{2}(x_{2} - x_{2} ) \\
+	& = \beta_{1} 
+\end{aligned}										
+$$
+
+## Multivariate derivatives
+
+What happens when there's more than one variable that is changing?
+
+> If you can do ordinary derivatives, you can do partial derivatives: just hold all the other input variables constant except for the one you're differentiang with respect to.
+
+Suppose we have a function $f$ now of two (or more) variables and we want to determine the rate of change relative to one of the variables. To do so, we would find its partial derivative, which is defined similar to the derivative of a function of one variable. 
+
+__Partial Derivative__:  Let $f$ be a function of the variables $(x_1,\ldots,x_n)$.  The partial derivative of $f$ with respect to $x_i$ is 
+
+$$\frac{\partial f}{\partial x_i} (x_1,\ldots,x_n) = \lim\limits_{h\to 0} \frac{f(x_1,\ldots,x_i+h,\ldots,x_n)-f(x_1,\ldots,x_i,\ldots,x_n)}{h}$$
+
+Only the $i$th variable changes --- the others are treated as constants.
+
+We can take higher-order partial derivatives, like we did with functions of a single variable, except now the higher-order partials can be with respect to multiple variables.
+
+Notice that you can take partials with regard to different variables. 
+
+Suppose $f(x,y)=x^2+y^2$. Then
+
+$$
+\begin{aligned}
+\frac{\partial f}{\partial x}(x,y) &= 2x \\
+\frac{\partial f}{\partial y}(x,y) &= 3y\\
+\frac{\partial^2 f}{\partial x^2}(x,y) &= 2\\
+\frac{\partial^2 f}{\partial x \partial y}(x,y) &= 2
+\end{aligned}
+$$
+
+Let $f(x,y)=x^3 y^4 +e^x -\log y$. What are the following partial derivaitves?
+
+$$
+\begin{aligned}
+\frac{\partial f}{\partial x}(x,y) &= 3x^2y^4 + e^x\\
+\frac{\partial f}{\partial y}(x,y) &=4x^3y^3 - \frac{1}{y}\\
+\frac{\partial^2 f}{\partial x^2}(x,y) &= 6xy^4 + e^x\\
+\frac{\partial^2 f}{\partial x \partial y}(x,y) &= 12x^3y^2 + \frac{1}{y^2}
+\end{aligned}
+$$
+
+### Rate of change, linear regression
+
+Suppose we regress $\text{Approval}_{i}$ rate for Trump in month $i$ on $\text{Employ}_{i}$ and $\text{Gas}_{i}$.  We obtain the following model:
+
+$$\text{Approval}_{i} = 0.8  -0.5 \text{Employ}_{i}  -0.25 \text{Gas}_{i}$$
+
+We are modeling $\text{Approval}_{i} = f(\text{Employ}_{i}, \text{Gas}_{i} )$.  What is the partial derivative with respect to employment?
+
+$$\frac{\partial f(\text{Employ}_{i}, \text{Gas}_{i} ) }{\partial \text{Employ}_{i} } = -0.5$$
+
+## Multivariate optimization
+
+### Optimizing multivariate functions 
+
+* Parameters $\boldsymbol{\beta} = (\beta_{1}, \beta_{2}, \ldots, \beta_{n} )$ such that $f(\boldsymbol{\beta}| \boldsymbol{X}, \boldsymbol{Y})$ is maximized
+* Policy $\boldsymbol{x} \in \Re^{n}$ that maximizes $U(\boldsymbol{x})$
+* Weights $\boldsymbol{\pi} = (\pi_{1}, \pi_{2}, \ldots, \pi_{K})$ such that a weighted average of forecasts $\boldsymbol{f}  =  (f_{1} , f_{2}, \ldots, f_{k})$ have minimum loss
+
+    $$\min_{\boldsymbol{\pi}} = - (\sum_{j=1}^{K} \pi_{j} f_{j}  - y ) ^ 2$$
+
+Today we'll describe analytic and computational approaches to multivariate optimization:
+
+* Analytic approach
+* Computational approach
+    * Grid search
+    * Multivariate Newton-Raphson
+    * Stochastic gradient descent
+
+### Differences from single variable optimization procedure
+
+* Same basic approach, except we have multiple parameters of interest
+* Requires more explicit knowledge of linear algebra to track all the components and optimize over the multidimensional space
+
+Let $\boldsymbol{x} \in \Re^{n}$ and let $\delta >0$.  Define a **neighborhood** of $\boldsymbol{x}$, $B(\boldsymbol{x}, \delta)$, as the set of points such that,
+
+$$
+\begin{eqnarray}
+B(\boldsymbol{x}, \delta) & = & \{ \boldsymbol{y} \in \Re^{n} : ||\boldsymbol{x} - \boldsymbol{y}||< \delta \}
+\end{eqnarray}
+$$
+
+* That is, $B(\boldsymbol{x}, \delta)$ is the set of points where the vector $\boldsymbol{y}$ is a vector in n-dimensional space such that vector norm of $\boldsymbol{x} - \boldsymbol{y}$  is less than $\delta$
+* So the neighborhood is at most $\delta$ big
+
+Now suppose $f:X \rightarrow \Re$ with $X \subset \Re^{n}$. A vector $\boldsymbol{x}^{*} \in X$ is a **global maximum** if , for all other $\boldsymbol{x} \in X$
+
+$$
+\begin{eqnarray}
+f(\boldsymbol{x}^{*}) & > & f(\boldsymbol{x} )  
+\end{eqnarray}
+$$
+
+A vector $\boldsymbol{x}^{\text{local}}$ is a **local** maximum if there is a neighborhood around $\boldsymbol{x}^{\text{local}}$, $Q \subset X$ such that, for all $x \in Q$,
+
+$$
+\begin{eqnarray}
+f(\boldsymbol{x}^{\text{local} }) & > & f(\boldsymbol{x} )
+\end{eqnarray}
+$$
+
+The maximum and minimum values of a function $f:X \rightarrow \Re$ on the real number line (in n-dimensional space) will fall somewhere along $X$. This is the same as we saw yesterday, except now $X$ is not a scalar value - it is a vector $\boldsymbol{X}$.
+
+### First derivative test: Gradient
+
+Suppose $f:X \rightarrow \Re^{n}$ with $X \subset \Re^{1}$ is a differentiable function. Define the **gradient** vector of $f$ at $\boldsymbol{x}_{0}$, $\nabla f(\boldsymbol{x}_{0})$ as
+
+$$
+\begin{eqnarray}
+\nabla f (\boldsymbol{x}_{0})  & = & \left(\frac{\partial f (\boldsymbol{x}_{0}) }{\partial x_{1} }, \frac{\partial f (\boldsymbol{x}_{0}) }{\partial x_{2} }, \frac{\partial f (\boldsymbol{x}_{0}) }{\partial x_{3} }, \ldots, \frac{\partial f (\boldsymbol{x}_{0}) }{\partial x_{n} } \right) 
+\end{eqnarray}
+$$
+
+* It is the first partial derivatives for each variable $x_n$ stored in a vector
+* Gradient points in the direction that the function is **increasing** in the fastest direction
+
+So if $\boldsymbol{a} \in X$ is a **local** extremum, then, 
+
+$$
+\begin{eqnarray}
+\nabla f(\boldsymbol{a}) & = & \boldsymbol{0}  \\
+									& = & (0, 0, \ldots, 0)  				
+\end{eqnarray}
+$$
+
+That is, the root(s) of the gradient are where $f(\boldsymbol{a})$ equals $\boldsymbol{0}$ in $n$-dimensional space.
+
+#### Examples
+
+$$
+\begin{eqnarray}
+f(x,y) &=& x^2+y^2 \\
+\Delta f(x,y) &=& (2x, \, 2y)
+\end{eqnarray}
+$$
+
+$$
+\begin{eqnarray}
+f(x,y) &=& x^3 y^4 +e^x -\log y \\
+\Delta f(x,y) &=& (3x^2 y^4 + e^x, \, 4x^3y^3 - \frac{1}{y})
+\end{eqnarray}
+$$
+
+#### Critical values
+
+We can have **critical values**:
+
+1. Maximum
+1. Minimum
+1. Saddle point
+
+In order to know if we are at a max/min/saddle point, we need to perform the second derivative test.
+
+### Second derivative test: Hessian
+
+Suppose $f:X \rightarrow \Re^{1}$ , $X \subset \Re^{n}$, with $f$ a twice differentiable function.  We will define the **Hessian** matrix as the matrix of second derivatives at $\boldsymbol{x}^{*} \in X$,
+
+$$
+\begin{eqnarray}
+\boldsymbol{H}(f)(\boldsymbol{x}^{*} )  & = & \begin{pmatrix} 
+		\frac{\partial^{2} f }{\partial x_{1} \partial x_{1} } (\boldsymbol{x}^{*} ) & \frac{\partial^{2} f }{\partial x_{1} \partial x_{2} } (\boldsymbol{x}^{*} ) & \ldots & \frac{\partial^{2} f }{\partial x_{1} \partial x_{n} } (\boldsymbol{x}^{*} ) \\
+		\frac{\partial^{2} f }{\partial x_{2} \partial x_{1} } (\boldsymbol{x}^{*} ) & \frac{\partial^{2} f }{\partial x_{2} \partial x_{2} } (\boldsymbol{x}^{*} ) & \ldots & \frac{\partial^{2} f }{\partial x_{2} \partial x_{n} } (\boldsymbol{x}^{*} ) \\
+		\vdots & \vdots & \ddots & \vdots \\
+		\frac{\partial^{2} f }{\partial x_{n} \partial x_{1} } (\boldsymbol{x}^{*} ) & \frac{\partial^{2} f }{\partial x_{n} \partial x_{2} } (\boldsymbol{x}^{*} ) & \ldots & \frac{\partial^{2} f }{\partial x_{n} \partial x_{n} } (\boldsymbol{x}^{*} ) \\
+\end{pmatrix}  
+\end{eqnarray}
+$$
+
+* Hessians are symmetric
+* Describe the **curvature** of the function (think, how bended)
+* Requires differentiating on the entire gradient with respect to each $x_n$
+
+### Example Hessians
+
+$$
+\begin{eqnarray}
+f(x,y) &=& x^2+y^2 \\
+\Delta f(x,y) &=& (2x, \, 2y) \\
+\boldsymbol{H}(f)(x,y) &=& \begin{pmatrix}
+2 & 0 \\
+0 & 2
+\end{pmatrix}
+\end{eqnarray}
+$$
+
+$$
+\begin{eqnarray}
+f(x,y) &=& x^3 y^4 +e^x -\log y \\
+\Delta f(x,y) &=& (3x^2 y^4 + e^x, \, 4x^3y^3 - \frac{1}{y}) \\
+\boldsymbol{H}(f)(x,y) &=& \begin{pmatrix}
+6xy^4 + e^x & 12x^2y^3 \\
+12x^2y^3 & 12x^3y^2 + \frac{1}{y^2}
+\end{pmatrix}
+\end{eqnarray}
+$$
+
+#### Definiteness of a matrix
+
+Consider $n \times n$ matrix $\boldsymbol{A}$.  If, for all $\boldsymbol{x} \in \Re^{n}$ where $\boldsymbol{x} \neq 0$:
+
+$$
+\begin{eqnarray}
+\boldsymbol{x}^{'} \boldsymbol{A} \boldsymbol{x} & > & 0, \quad \text{ $\boldsymbol{A}$ is positive definite } \\
+\boldsymbol{x}^{'} \boldsymbol{A} \boldsymbol{x} & < & 0, \quad \text{ $\boldsymbol{A}$ is negative definite } 
+\end{eqnarray}
+$$
+
+If $\boldsymbol{x}^{'} \boldsymbol{A} \boldsymbol{x} >0$ for some $\boldsymbol{x}$ and $\boldsymbol{x}^{'} \boldsymbol{A} \boldsymbol{x}<0$ for other $\boldsymbol{x}$, then we say $\boldsymbol{A}$ is indefinite.
+
+* $\boldsymbol{x}$ is a vector of the appropriate length (can be any vector drawn from $\Re^n$ space), so a transposed vector times a matrix times a vector will result in a scalar value
+* $0$ is not a vector or a matrix, it is a scalar
+
+#### Second derivative test
+
+* If $\boldsymbol{H}(f)(\boldsymbol{a})$ is positive definite then $\boldsymbol{a}$ is a local minimum 
+* If $\boldsymbol{H}(f)(\boldsymbol{a})$ is negative definite then $\boldsymbol{a}$ is a local maximum 
+* If $\boldsymbol{H}(f)(\boldsymbol{a})$ is indefinite then $\boldsymbol{a}$ is a saddle point
+
+#### Use the determinant to assess definiteness
+
+How do we measure definiteness when up until now $\boldsymbol{x}$ could be any vector? We can use the **determinant** of the Hessian of $f$ at the critical value $\boldsymbol{a}$:
+
+$$
+\begin{eqnarray}
+\boldsymbol{H}(f)(\boldsymbol{a}) & = & \begin{pmatrix} 
+	A & B \\
+	B & C \\
+\end{pmatrix} 
+\end{eqnarray}
+$$
+
+The determinant for a $2 \times 2$ matrix can easily be calculated using the known formula $AC - B^2$.
+
+* $AC - B^2> 0$ and $A>0$ $\leadsto$ positive definite $\leadsto$ $\boldsymbol{a}$ is a local minimum 
+* $AC - B^2> 0$ and $A<0$ $\leadsto$ negative definite $\leadsto$ $\boldsymbol{a}$ is a local maximum
+* $AC - B^2<0$ $\leadsto$ indefinite $\leadsto$ saddle point 
+* $AC- B^2 = 0$ inconclusive
+
+### Basic procedure summarized
+
+1. Calculate gradient
+1. Set equal to zero, solve system of equations
+1. Calculate Hessian
+1. Assess Hessian at critical values
+1. Boundary values?  (if relevant)
+
+## A simple optimization example
+
+Suppose $f:\Re^{2} \rightarrow \Re$ with 
+
+$$
+\begin{eqnarray}
+f(x_{1}, x_{2}) & = & 3(x_1 + 2)^2  + 4(x_{2}  + 4)^2  
+\end{eqnarray}
+$$
+
+Calculate gradient:
+
+$$
+\begin{eqnarray}
+\nabla f(\boldsymbol{x}) & = & (6 x_{1} + 12 , 8x_{2} + 32 )  \\
+\boldsymbol{0} & = & (6 x_{1}^{*} + 12 , 8x_{2}^{*} + 32 )  
+\end{eqnarray}
+$$
+
+We now solve the system of equations to yield
+
+$$x_{1}^{*}  = - 2, \quad x_{2}^{*}  = -4$$
+
+$$
+\begin{eqnarray}
+\textbf{H}(f)(\boldsymbol{x}^{*}) & = & \begin{pmatrix}
+6 & 0 \\
+0 & 8 \\
+\end{pmatrix} 
+\end{eqnarray}
+$$
+
+det$(\textbf{H}(f)(\boldsymbol{x}^{*}))$ = 48 and $6>0$ so $\textbf{H}(f)(\boldsymbol{x}^{*})$ is positive definite. $\boldsymbol{x^{*}}$ is a **local minimum**.
+
+## Maximum likelihood estimation for a normal distribution
+
+Suppose that we draw an independent and identically distributed random sample of $n$ observations from a normal distribution,
+
+$$
+\begin{eqnarray}
+Y_{i} & \sim & \text{Normal}(\mu, \sigma^2)  \\  
+\boldsymbol{Y} & = & (Y_{1}, Y_{2}, \ldots, Y_{n} )   
+\end{eqnarray}
+$$
+
+Our task:
+
+* Obtain likelihood (summary estimator)
+* Derive maximum likelihood estimators for $\mu$ and $\sigma^2$
+
+$$
+\begin{eqnarray}
+L(\mu, \sigma^2 | \boldsymbol{Y} ) & \propto & \prod_{i=1}^{n} f(Y_{i}|\mu, \sigma^2) \\  
+&\propto  &  \prod_{i=1}^{N} \frac{\exp[ - \frac{ (Y_{i} - \mu)^2 }{2\sigma^2} ]}{\sqrt{2 \pi \sigma^2}} \\
+& \propto  & \frac{\exp[ -\sum_{i=1}^{n} \frac{(Y_{i} - \mu)^2}{2\sigma^2}  ]}{ (2\pi)^{n/2} \sigma^{2n/2} }
+ \end{eqnarray}
+$$
+ 
+Taking the logarithm, we have
+
+$$
+\begin{eqnarray}
+l(\mu, \sigma^2|\boldsymbol{Y} ) & = & -\sum_{i=1}^{n} \frac{(Y_{i} - \mu)^2}{2\sigma^2} - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log (\sigma^2)
+\end{eqnarray}
+$$
+
+Let's find $\widehat{\mu}$ and $\widehat{\sigma}^{2}$ that maximizes log-likelihood.
+
+$$
+\begin{eqnarray}
+l(\mu, \sigma^2|\boldsymbol{Y} ) & = &  -\sum_{i=1}^{n} \frac{(Y_{i} - \mu)^2}{2\sigma^2} - \frac{n}{2} \log (\sigma^2) \\
+\frac{\partial l(\mu, \sigma^2)|\boldsymbol{Y} )}{\partial \mu }  & = & \sum_{i=1}^{n} \frac{2(Y_{i} - \mu)}{2\sigma^2} \\
+\frac{\partial l(\mu, \sigma^2)|\boldsymbol{Y})}{\partial \sigma^2} & = &  -\frac{n}{2\sigma^2}  + \frac{1}{2\sigma^4} \sum_{i=1}^{n} (Y_{i} - \mu)^2
+\end{eqnarray}
+$$
+
+$$
+\begin{eqnarray}
+0 & = & -\sum_{i=1}^{n} \frac{2(Y_{i} - \widehat{\mu})}{2\widehat{\sigma}^2} \\
+0 & = &  -\frac{n}{2\widehat{\sigma}^2 }  + \frac{1}{2\widehat{\sigma}^4} \sum_{i=1}^{n} (Y_{i} - \mu^{*})^2 
+\end{eqnarray}
+$$
+
+
+Solving for $\widehat{\mu}$ and $\widehat{\sigma}^2$ yields,
+
+$$
+\begin{eqnarray}
+\widehat{\mu} & = & \frac{\sum_{i=1}^{n} Y_{i} }{n} \\
+\widehat{\sigma}^{2} & = & \frac{1}{n} \sum_{i=1}^{n} (Y_{i} - \overline{Y})^2
+\end{eqnarray}
+$$
+
+$$
+\textbf{H}(f)(\widehat{\mu}, \widehat{\sigma}^2)  = 
+ \begin{pmatrix} 
+\frac{\partial^{2} l(\mu, \sigma^2|\boldsymbol{Y} )}{\partial \mu^{2}} & \frac{\partial^{2} l(\mu, \sigma^2|\boldsymbol{Y} )}{\partial \sigma^{2} \partial \mu} \\
+\frac{\partial^{2} l(\mu, \sigma^2|\boldsymbol{Y} )}{\partial \sigma^{2} \partial \mu} & \frac{\partial^{2} l(\mu, \sigma^2|\boldsymbol{Y} )}{\partial^{2} \sigma^{2}} 
+\end{pmatrix}
+$$
+
+Taking derivatives and evaluating at MLE's yields,
+
+$$
+\begin{eqnarray}
+\textbf{H}(f)(\widehat{\mu}, \widehat{\sigma}^2) & = &  \begin{pmatrix} \frac{-n}{\widehat{\sigma}^2} & 0 \\
+0 & \frac{-n}{2(\widehat{\sigma}^2)^2}  \\
+\end{pmatrix}
+\end{eqnarray}
+$$
+
+* $\text{det}(\textbf{H}(f)(\widehat{\mu}, \widehat{\sigma}^2)) = \dfrac{n^2}{2(\widehat{\sigma}^2)^3} > 0$ and $A = \dfrac{-n}{\widehat{\sigma}^2} < 0$ $\leadsto$ maximum
+* Determinant is greater than 0 and $A$ is less than zero - local maximum
+
+## Computational optimization procedures
+
+* Analytical approaches can be difficult/impossible
+* Computational approaches simplify the problem
+* Different algorithms available with benefits/drawbacks
+    * Grid search - tedious
+    * Newton-Raphson - expensive
+    * Gradient descent - parallelizable
+
+### Multivariate Newton-Raphson
+
+Suppose $f:\Re^{n} \rightarrow \Re$.  Suppose we have guess $\boldsymbol{x}_{t}$. Then our update is:
+
+$$
+\begin{eqnarray}
+\boldsymbol{x}_{t+1} & = & \boldsymbol{x}_{t} - \frac{\nabla f(\boldsymbol{x}_{t}) }{\textbf{H}(f)(\boldsymbol{x}_{t})} 
+\end{eqnarray}
+$$
+
+* Approximate function with **tangent plane**
+* Find value of $x_{t+1}$ that makes the plane equal to zero
+* Update again
+
+#### Drawbacks
+
+* Expensive to calculate (requires inverting Hessian)
+* Very sensitive to starting points
+
+### Grid search
+
+* Example: MLE for a normal distribution
+* In R, drew 10,000 realizations from $Y_{i} \sim \text{Normal}(0.25, 100)$
+* Used realized values $y_{i}$ to evaluate $l(\mu, \sigma^2| \boldsymbol{y} )$ across a range of values
+* Computationally inefficient
+    * Have to try a large number of combinations of parameters
+
+```{r loglik}
+set.seed(1234)
+
+log.like <- function(mu, sigma.2, y) {
+  part1 <- -(1 / (2 * sigma.2)) * sum((y - mu)^2)
+  part2 <- -(length(y) / 2) * log(sigma.2)
+  out <- part1 + part2
+  return(out)
+}
+
+x <- rnorm(n = 10000, mean = 0.25, sd = 10)
+
+grid_search_plot <- expand.grid(
+  mu = seq(-2, 2, by = .05),
+  sigma2 = seq(8^2, 12^2, by = .1)
+) %>%
+  as_tibble() %>%
+  mutate(logLik = map2_dbl(mu, sigma2, log.like, y = x)) %>%
+  ggplot(aes(mu, sigma2, fill = logLik)) +
+  geom_raster() +
+  geom_contour(aes(z = logLik)) +
+  scale_fill_continuous(type = "viridis") +
+  labs(
+    x = expression(mu),
+    y = expression(sigma^2)
+  )
+grid_search_plot
+```
+
+### Gradient descent
+
+Mathematically, each neural layer in the network example transforms input data as follows:
+
+$$\text{output} = \text{relu}(\text{dot}(W, \text{input}) + B)$$
+
+* `input` - the input data 
+* `dot()` - dot product (tensor multiplication)
+* `relu()` - element-wise operations
+    * Operations applied independently to each entry (cell/value) in the tensor
+    * Now you can see why neural networks are highly parallelizable - each core operation is independent from the other values in the tensor
+* $W, b$ - tensors that are attributes of the layer
+    * Weights
+    * Parameters
+
+* We want to adjust the weights to produce the lowest loss score
+* Initialize the weights with random values that are not useful
+    * Iterate through increasingly more useful values using the feedback signal to make adjustments
+    * How do we know to adjust the weights?
+
+#### Training loop
+
+1. Draw a batch of training samples `x` and targets `y`
+1. Run the network on `x` (called a **forward pass**) to obtain predictions `y_pred`
+1. Compute the loss of the network on the batch (mismatch between `y_pred` and `y`)
+1. Update the weights of the network in a way that slightly reduces the loss on this batch
+
+#### How to update the weights
+
+##### Naive solution
+
+* Freeze all weights except one scalar coefficient and try different values for that coefficient
+* Horribly inefficient
+    * Need to compute two forward passes for each individual coefficient (upwards of thousands/millions of coefficients)
+* Instead rely on differentiation and compute the **gradient** of the loss with regard to the network's coefficients
+* Move the coefficients in the opposite direction from the gradient, thus decreasing the loss
+
+#### Derivative
+
+![](images/fig-2-10.png)
+
+* Continuous, smooth function $y = f(x)$
+* Derivative $f'(x)$ defines the slope of the line $f(x)$ at any given point (basic calculus)
+* If the slope $a$ is positive, then a small change of $x$ around a point $p$ will result in a decrease of $f(x)$
+* If the slope $a$ is negative, then a small change of $x$ around a point $p$ will result in an increase of $f(x)$
+* Magnitude of $a$ tells you how quickly this increase or decrease will happen
+
+#### Derivative of a tensor operation
+
+* Derivative of a tensor operation is called the **gradient** - generalization of derivatives to multidimensional inputs
+
+Consider an input vector `x`, a matrix `W`, a target `y`, and a loss function `loss`. Use `W` to compute a prediction `y_pred` and compute the loss:
+
+```
+y_pred = dot(W, x)
+loss_value = loss(y_pred, y)
+```
+
+If the data inputs `x` and `y` are held constant, then we can rewrite the `loss_value` function as:
+
+```
+loss_value = f(W)
+```
+
+A function that depends strictly on `W`. The derivative of `f` at a point `W_0` is a tensor with the same shape as `W`, where each coefficient indicates the direction and magnitude of the change in `loss_value` you'd observe when modifying that coefficient within the `W` matrix. Now rather than interpreting the derivative of `f(x)` with a single coefficient as the slope of a linear curve, we can interpret this derivative as the tensor describing the curvature of the multidimensional function.
+
+* We can reduce the `loss_value = f(W)` by moving `W` in the opposite direction from the gradient through a series of small, incremental adjustments
+
+#### Stochastic gradient descent
+
+* As with other approaches, we can only analytically solve for the derivative with the number of parameters (coefficients in the network) is small. This is never the case
+* Instead, we have to compute it algorithmically
+
+1. Draw a batch of training samples `x` and targets `y`
+1. Run the network on `x` (called a **forward pass**) to obtain predictions `y_pred`
+1. Compute the loss of the network on the batch (mismatch between `y_pred` and `y`)
+1. Compute the gradient of the loss with regard to the network's parameters (a **backward pass**)
+1. Move the parameters a little in the opposite direction from the gradient to reduce the loss for the batch
+
+* Known as **mini-batch stochastic gradient descent**
+    * Each batch is drawn at random
+
+![](images/fig-2-11.png)
+
+![](images/fig-2-12.png)
+
+* Lots of variants on SGD which account for **momentum**
+
+![](images/fig-2-13.png)
+
+* Goal is to find the global minimum, rather than be stuck in a local minimum
+* Momentum - roll a ball down the hill
+    * Speed of ball is dictated not only by the current slop value (current acceleration) but also by the current velocity (resulting from past acceleration)
+* In deep learning terms
+    * Base you weight adjustments on both
+        1. Current gradient value
+        1. Previous parameter update
+```{r include=FALSE, cache=FALSE}
+devtools::session_info()
+```

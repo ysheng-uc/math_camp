@@ -1,0 +1,38 @@
+```{r setup, include = FALSE}
+set.seed(123)
+options(digits = 3)
+options(htmltools.dir.version = FALSE)
+
+# set custom knitr settings
+knitr::opts_chunk$set(
+  # comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.retina = 2,
+  fig.width = 12
+)
+
+# load bookdown to register theorem and custom engines
+bookdown:::register_eng_math(names(bookdown:::theorem_abbr), bookdown:::eng_theorem)
+bookdown:::register_eng_math(names(bookdown:::label_names_math2), bookdown:::eng_proof)
+
+# set base theme
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = rcfss::base_size))
+
+# create default plot template for drawing functions
+function_plot <- ggplot2::ggplot(
+  data = tibble::tibble(x = 0),
+  mapping = ggplot2::aes(x = x)
+) +
+  ggplot2::geom_hline(yintercept = 0, linetype = 2, alpha = .5) +
+  ggplot2::geom_vline(xintercept = 0, linetype = 2, alpha = .5) +
+  ggplot2::xlim(-4, 4) +
+  ggplot2::labs(
+    x = expression(x),
+    y = expression(y)
+  )
+```

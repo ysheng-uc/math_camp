@@ -1,0 +1,604 @@
+# Systems of linear equations and determinants {#systems-of-linear-equations}
+
+```{r setup}
+library(tidyverse)
+library(patchwork)
+library(here)
+library(gganimate)
+```
+
+## Learning objectives {-}
+
+* Demonstrate how to solve systems of linear equations using matrix inversion
+* Define matrix rank, norms, and inversion
+* Define the determinant of a matrix
+* Define matrix decomposition
+* Explain singular value decomposition and demonstrate the applicability of matrix algebra to real-world problems
+
+## Assigned readings {-}
+
+* Pemberton and Rau ch 12, 13.1-.2
+
+## Matrix inversion
+
+Suppose $\mathbf{X}$ is an $n \times n$ matrix.  We want to find the matrix $\mathbf{X}^{-1}$ such that 
+
+$$
+\mathbf{X}^{-1} \mathbf{X} = \mathbf{X} \mathbf{X}^{-1} = \mathbf{I}
+$$
+
+where $\mathbf{I}$ is the $n \times n$ identity matrix.
+
+Why is this useful? Matrix inversion is necessary to:
+
+* Solve systems of equations
+* Perform linear regression
+* Provide intuition about **colinearity**, **fixed effects**, and other relevant design matricies for social scientists.
+
+### Calculating matrix inversions
+
+Consider the following equations:
+
+$$
+\begin{aligned}
+x_{1} + x_{2} + x_{3} &= 0 \\
+0x_{1} 	+ 	5x_{2} + 0x_{3}  & = 5 \\
+0 x_{1} + 0 x_{2} + 3 x_{3} & =  6 \\
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\boldsymbol{A}  &= \begin{bmatrix} 1 & 1 & 1 \\ 0 & 5 & 0 \\ 0 & 0 & 3 \end{bmatrix} \\
+\boldsymbol{x} &= (x_{1} , x_{2}, x_{3} ) \\
+\boldsymbol{b} &= (0, 5, 6)
+\end{aligned}
+$$
+
+The system of equations are now,
+
+$$\mathbf{A}\mathbf{x} =\mathbf{b}$$
+
+$\mathbf{A}^{-1}$ exists **if and only if** $\mathbf{A}\mathbf{x}  =  \mathbf{b}$ has only one solution.
+
+#### Definition
+
+Suppose $\mathbf{X}$ is an $n \times n$ matrix.  We will call $\mathbf{X}^{-1}$ the **inverse** of $\mathbf{X}$ if
+
+$$
+\mathbf{X}^{-1} \mathbf{X} = \mathbf{X} \mathbf{X}^{-1} = \mathbf{I}
+$$
+
+If $\mathbf{X}^{-1}$ exists then $\mathbf{X}$ is invertible.  If $\mathbf{X}^{-1}$ does not exist, then we will say $\mathbf{X}$ is **singular**.
+
+> Note the key requirement: only square matricies are invertible.
+
+Solved via R:
+
+```{r matrix-inverse}
+A <- matrix(c(1, 1, 1, 0, 5, 0, 0, 0, 3),
+  nrow = 3,
+  ncol = 3, byrow = TRUE
+)
+
+b <- c(0, 5, 6)
+
+solve(A) # inverse of A
+# solve(A) %*% A # verify inverse times itself is identity matrix
+# solve(A, b)   # inverse of A times y = x
+```
+
+### When do inverses exist
+
+Inverses exist when the columns are **linearly independent** - that is, there is not repeated information in the matrix.
+
+#### Example 1
+
+Consider $\mathbf{v}_{1} = (1, 0, 0)$, $\mathbf{v}_{2} = (0,1,0)$, $\mathbf{v}_{3} = (0,0,1)$
+
+Can we write any of these vectors as a combination of the other vectors? **No.**
+
+#### Example 2
+
+Consider $\mathbf{v}_{1} = (1, 0, 0)$, $\mathbf{v}_{2} = (0,1,0)$, $\mathbf{v}_{3} = (0,0,1)$, $\mathbf{v}_{4} = (1, 2, 3)$.
+
+Can we write this as a combination of other vectors?
+
+$$\mathbf{v}_{4} = \mathbf{v}_{1} + 2 \mathbf{v}_{2} + 3\mathbf{v}_{3}$$
+
+So a matrix $\mathbf{V}$ containing these vectors as columns is not linearly independent, and therefore is noninvertible (also known as **singular**). 
+
+### Inverting a $2 \times 2$ matrix
+
+If $\mathbf{A} = \begin{bmatrix} a & b \\ c & d \end{bmatrix}$ and $ad \neq bc$, then $\mathbf{A}$ is invertible and
+
+$$\mathbf{A}^{-1} = \frac{1}{ad - bc} \begin{bmatrix}
+d & -b \\
+-c & a
+\end{bmatrix}$$
+
+For example
+
+$$
+\begin{aligned}
+\mathbf{A} &= \begin{bmatrix}
+9 & 7 \\
+2 & 1
+\end{bmatrix} \\
+\mathbf{A}^{-1} &= \frac{1}{(-5)} \begin{bmatrix}
+1 & -7 \\
+-2 & 9
+\end{bmatrix} = \begin{bmatrix}
+-0.2 & 1.4 \\
+0.4 & -1.8
+\end{bmatrix}
+\end{aligned}
+$$
+
+We can verify by
+
+$$\mathbf{A}^{-1} \mathbf{A} = \begin{bmatrix}
+9 & 7 \\
+2 & 1
+\end{bmatrix} \begin{bmatrix}
+-0.2 & 1.4 \\
+0.4 & -1.8
+\end{bmatrix} = \begin{bmatrix}
+1 & 0 \\
+0 & 1
+\end{bmatrix} = \mathbf{I}$$
+
+### Inverting an $n \times n$ matrix
+
+We can use the process of **Gauss-Jordan elimination** to calculate the inverse of an $n \times n$ matrix. First we setup an **augmented matrix** $[\mathbf{A} \; \mathbf{I}]$ which we reduce to the form $[\mathbf{D} \; \mathbf{B}]$, where $\mathbf{D}$ is a diagonal matrix with no diagonal entry equal to $0$. $\mathbf{A}^{-1}$ is then found by dividing each row of $\mathbf{B}$ by the corresponding diagonal entry of $\mathbf{D}$.
+
+For example, let us invert
+
+$$\mathbf{A} = \begin{bmatrix}
+2 & 1 & 2 \\
+3 & 1 & 1 \\
+3 & 1 & 2
+\end{bmatrix}$$
+
+First setup the augmented matrix:
+
+$$
+\left[
+\begin{array}{rrr|rrr}
+2 & 1 & 2 & 1 & 0 & 0 \\
+3 & 1 & 1 & 0 & 1 & 0 \\
+3 & 1 & 2 & 0 & 0 & 1
+\end{array}
+\right]
+$$
+
+Next we substract $3/2$ times the first row from each of the other rows to get:
+
+$$
+\left[
+\begin{array}{rrr|rrr}
+2 & 1 & 2 & 1 & 0 & 0 \\
+0 & -1/2 & -2 & -3/2 & 1 & 0 \\
+0 & -1/2 & -1 & -3/2 & 0 & 1
+\end{array}
+\right]
+$$
+
+Our next step is to add twice the second row to the first row, and to subtract the second row from the third row. We obtain:
+
+$$
+\left[
+\begin{array}{rrr|rrr}
+2 & 0 & -2 & -2 & 2 & 0 \\
+0 & -1/2 & -2 & -3/2 & 1 & 0 \\
+0 & 0 & 1 & 0 & -1 & 1
+\end{array}
+\right]
+$$
+
+Finally we add twice the third row to the first and second rows:
+
+$$
+\left[
+\begin{array}{rrr|rrr}
+2 & 0 & 0 & -2 & 0 & 2 \\
+0 & -1/2 & 0 & -3/2 & -1 & 2 \\
+0 & 0 & 1 & 0 & -1 & 1
+\end{array}
+\right]
+$$
+
+At this point $\mathbf{B}$ is a diagonal matrix with all non-zero elements on the diagonal. We obtain $\mathbf{A}^{-1}$ by dividing the first row of $\mathbf{B}$ by $2$, the second row by $-\frac{1}{2}$, and the third row by $1$:
+
+$$\mathbf{A}^{-1} = \begin{bmatrix}
+-1 & 0 & 1 \\
+3 & 2 & -4 \\
+0 & -1 & 1
+\end{bmatrix}$$
+
+### Application to regression analysis
+
+In methods classes you learn about linear regression. For each $i$ (individual) we observe covariates $x_{i1}, x_{i2}, \ldots, x_{ik}$ and independent variable $Y_{i}$. Then,
+
+$$
+\begin{aligned}
+Y_{1} & = \beta_{0} + \beta_{1} x_{11} + \beta_{2} x_{12} + \ldots + \beta_{k} x_{1k} \\
+Y_{2} & = \beta_{0} + \beta_{1} x_{21} + \beta_{2} x_{22} + \ldots + \beta_{k} x_{2k} \\
+\vdots & \vdots & \vdots \\
+Y_{i} & = \beta_{0} + \beta_{1} x_{i1} + \beta_{2} x_{i2} + \ldots + \beta_{k} x_{ik} \\
+\vdots & \vdots & \vdots \\
+Y_{n} & = \beta_{0} + \beta_{1} x_{n1} + \beta_{2} x_{n2} + \ldots + \beta_{k} x_{nk}
+\end{aligned}
+$$
+
+* $\mathbf{x}_{i} = (1, x_{i1}, x_{i2}, \ldots, x_{ik})$
+* $\mathbf{X} = \begin{bmatrix} \mathbf{x}_{1}\\\mathbf{x}_{2}\\ \vdots \\ \mathbf{x}_{n} \end{bmatrix}$
+* $\boldsymbol{\beta} = (\beta_{0}, \beta_{1}, \ldots, \beta_{k} )$
+* $\mathbf{Y} = (Y_{1}, Y_{2}, \ldots, Y_{n})$
+
+Then we can write 
+
+$$
+\begin{aligned}
+\mathbf{Y} &= \mathbf{X}\mathbf{\beta} \\
+\mathbf{X}^{'} \mathbf{Y} &= \mathbf{X}^{'} \mathbf{X} \mathbf{\beta} \\
+(\mathbf{X}^{'}\mathbf{X})^{-1} \mathbf{X}^{'} \mathbf{Y} &= (\mathbf{X}^{'}\mathbf{X})^{-1}\mathbf{X}^{'} \mathbf{X} \mathbf{\beta} \\
+(\mathbf{X}^{'}\mathbf{X})^{-1} \mathbf{X}^{'} \mathbf{Y} &=\mathbf{\beta} 
+\end{aligned}
+$$
+
+1. Pre-multiply both sides by $\mathbf{X}'$
+1. Pre-multiply both sides by $(\mathbf{X}^{'}\mathbf{X})^{-1}$
+1. $(\mathbf{X}^{'}\mathbf{X})^{-1}\mathbf{X}^{'} \mathbf{X} = \mathbf{I}$
+
+Depends on $(\mathbf{X}^{'}\mathbf{X})^{-1}$ being invertible. If this is true, we can calculate the values for $\boldsymbol{\beta}$. If not, then we cannot. When might this occur? We'll see some occurences of this in today's and future problem sets.
+
+### Application to solving systems of equations: tax benefits of charitable contributions
+
+Suppose a company earns before-tax profits of \$100,000.^[From Simon and Blume 6.2.1.] It has agreed to contribute 10% of its after-tax profits to the Red Cross Relief Fund. It must pay a state tax of 5% of its profits (after the Red Cross donation) and a federal tax of 40% of its profits (after the donation and state taxes are paid). How much does the company pay in state taxes, federal taxes, and Red Cross donation?
+
+Without a model, this is a difficult problem because each payment takes into consideration the other payments. However, if we write out the **linear equations** which describe these deductions and payments, then we can understand the relationships between these payments and solve it in a straightforward manner.
+
+Let $C$, $S$, and $F$ represent the amounts of the charitable contributin, state tax, and federal tax, respectively. After-profits are $\$100{,}000 - (S + F)$, so $C = 0.10 \times (100{,}000 - (S + F))$. We can write this as
+
+$$C + 0.1S + 0.1F = 10{,}000$$
+
+putting all the variables on one side. The statement that state tax is 5% of the profits net of the donation becomes $S = 0.05 \times (100{,}000 - C)$, which is
+
+$$0.05C + S = 5{,}000$$
+
+Federal taxes are 40% of the profit after deducting $C$ and $S$, this relationship is expressed as $F = 0.40 \times [100{,}000 - (C+S)]$, or
+
+$$0.4C + 0.4S + F = 40{,}000$$
+
+We can summarize these payments in a single system of linear equations:
+
+$$
+\begin{aligned}
+C & + & 0.1S & + & 0.1F &= 10{,}000 \\
+0.05C & + & S & &&= 5{,}000 \\
+0.4C & + & 0.4S & + & F &= 40{,}000
+\end{aligned}
+$$
+
+We could substitute the middle equation for $S$ in terms of $C$ and solve the resulting system. Or, we can use matrix inversion:
+
+```{r profits}
+A <- matrix(c(1, .1, .1, .05, 1, 0, .4, .4, 1),
+  nrow = 3,
+  ncol = 3, byrow = TRUE
+)
+
+b <- c(10000, 5000, 40000)
+
+# solve(A) # inverse of A
+solve(A, b) # inverse of A times b = x
+```
+
+## Determinant
+
+The **determinant** of a square matrix is a single number summary. The determinant uses all of the values of a square matrix to provide a summary of structure. Unfortunately it is rather complicated to calculate for larger matricies. First let's consider how to calculate the determinant of a $2 \times 2$ matrix, which is the difference in diagonal products.
+
+$$\det(\mathbf{X}) = \mid \mathbf{X} \mid = \left| \begin{matrix}
+x_{11} & x_{12} \\
+x_{21} & x_{22}
+\end{matrix} \right| = x_{11}x_{22} - x_{12}x_{21}$$
+
+Some simple examples include
+
+$$\left| \begin{matrix}
+1 & 2 \\
+3 & 4
+\end{matrix} \right| = (1)(4) - (2)(3) = 4 - 6 = -2$$
+
+$$\left| \begin{matrix}
+10 & \frac{1}{2} \\
+4 & 1
+\end{matrix} \right| = (10)(1) - \left( \frac{1}{2} \right)(4) = 10 - 2 = 8$$
+
+$$\left| \begin{matrix}
+2 & 3 \\
+6 & 9
+\end{matrix} \right| = (2)(9) - (3)(6) = 18 - 18 = 0$$
+
+The last case, where the determinant is $0$, is an important case which we shall see shortly.
+
+Unfortunately calculating determinants gets much more involved with square matricies larger than $2 \times 2$. First we need to define a **submatrix**. The submatrix is simply a form achieved by deleting rows and/or columns of a matrix, leaving the remaining elements in their respective places. So for the matrix $\mathbf{X}$, notice the following submatricies:
+
+$$
+\mathbf{X} = \begin{bmatrix}
+x_{11} & x_{12} & x_{13} & x_{14} \\
+x_{21} & x_{22} & x_{23} & x_{24} \\
+x_{31} & x_{32} & x_{33} & x_{34} \\
+x_{41} & x_{42} & x_{43} & x_{44} \\
+\end{bmatrix}
+$$
+
+$$
+\mathbf{X}_{[11]} = \begin{bmatrix}
+x_{22} & x_{23} & x_{24} \\
+x_{32} & x_{33} & x_{34} \\
+x_{42} & x_{43} & x_{44} \\
+\end{bmatrix},
+\mathbf{X}_{[24]} = \begin{bmatrix}
+x_{11} & x_{12} & x_{13}  \\
+x_{31} & x_{32} & x_{33}  \\
+x_{41} & x_{42} & x_{43}  \\
+\end{bmatrix}
+$$
+
+To generalize for further $n \times n$ matricies, the determinant can be calculated as
+
+$$\mid \mathbf{X} \mid = \sum_{j=1}^n (-1)^{i+j} x_{ij} \mid\mathbf{X}_{[ij]}\mid$$
+
+where the $ij$th **minor** of $\mathbf{X}$ for $x_{ij}$, $\mid\mathbf{X}_{[ij]}\mid$, is the determinant of the $(n - 1) \times (n - 1)$ submatrix that results from taking the $i$th row and $j$th column out. The **cofactor** of $\mathbf{X}$ is the minor signed as $(-1)^{i+j} x_{ij} \mid\mathbf{X}_{[ij]}\mid$. To calculate the determinant we cycle recursively through the columns and take sums with a formula that multiplies the cofactor by the determining value.
+
+For instance, here is the method applied to a $3 \times 3$ matrix:
+
+$$
+\begin{aligned}
+\mathbf{X} &= \begin{bmatrix}
+x_{11} & x_{12} & x_{13} \\
+x_{21} & x_{22} & x_{23} \\
+x_{31} & x_{32} & x_{33} \\
+\end{bmatrix} \\
+\det(\mathbf{X}) &= (+1)x_{11} \left| \begin{matrix}
+x_{22} & x_{23} \\
+x_{32} & x_{33} \\
+\end{matrix} \right| +(-1)x_{12} \left| \begin{matrix}
+x_{21} & x_{23} \\
+x_{31} & x_{33} \\
+\end{matrix} \right| + (+1)x_{13} \left| \begin{matrix}
+x_{21} & x_{22} \\
+x_{31} & x_{32} \\
+\end{matrix} \right|
+\end{aligned}
+$$
+
+Now the problem is simplified because the subsequent three determinant calculations are on $2 \times 2$ matricies.
+
+### Relevance of the determinant
+
+Remember how we wanted to invert a $2 \times 2$ matrix previously?
+
+$$\mathbf{A}^{-1} = \frac{1}{ad - bc} \begin{bmatrix}
+d & -b \\
+-c & a
+\end{bmatrix}$$
+
+$\frac{1}{ad - bc}$ is the formula for the determinant of a $2 \times 2$ matrix! Recall that non-invertible (singular) matricies are square matricies which have columns that are linearly dependent. Well would it surprise you to know that singular matricies also have the unique property whereby their determinant is $0$. This is also important as we move into eigenvectors and diagonalization.
+
+## Matrix decomposition
+
+**Matrix decomposition** is a factorization of a matrix into a product of matricies. That is, a matrix can be **decomposed** into more efficient matricies depending on the calculations needing to be performed. **LU decomposition** applies to square matricies:
+
+$$\mathbf{A} = \mathbf{L}\mathbf{U}$$
+
+where $\mathbf{L}$ is a lower triangular matrix and $\mathbf{U}$ is an upper triangular matrix. The benefit of this decomposition is for solving a system of linear equations $\mathbf{A}\mathbf{x} =\mathbf{b}$ because they reduce the number of steps necessary in Gauss-Jordan elimination to invert the matrix. Hence, more computationally efficient.
+
+LU decomposition only works on square matricies. But there are many other forms of decomposition used for solving systems of linear equations, or more commonly in the social sciences for **dimension reduction**.
+
+### Dimension reduction
+
+**Dimension reduction** refers to decreasing the number of dimensions in your dataset. There are a couple reasons you might do this:
+
+1. You want to visualize the data but you have a lot of variables. You could generate something like a scatterplot matrix, but once you have more than a handful of variables even these become difficult to interpret.
+1. You want to use the variables in a supervised learning framework, but reduce the total number of predictors to make the estimation more efficient.
+
+In either case, the goal is to reduce the dimensionality of the data by identifying a smaller number of representative variables/vectors/columns that collectively explain most of the variability in the original dataset. There are several methods available for performing such a task. First we will examine an example of applying dimension reduction techniques to summarize roll-call voting in the United States.
+
+#### Application: DW-NOMINATE
+
+In the 1990s, dimension reduction techniques revolutionized the study of U.S. legislative politics. Measuring the ideology of legislators prior to this point was difficult because there was no method for locating legislators along an ideological spectrum (liberal-conservative) in a manner that allowed comparisons over time. That is, how liberal was a Democrat in 1870 compared to a Democrat in 1995? Additionally, supposed you wanted to predict how a legislator would vote on a given bill. Roll-call votes record individual legislator behavior, so you could use past votes to predict future ones. But there have been tens of thousands of recorded votes over the course of the U.S. Congress. Even in a given term of Congress, the Senate may cast hundreds of recorded votes. But there are only 100 senators (at present), and you cannot estimate a regression model when your number of predictors $p$ is larger than your number of observations $n$. We need some method for reducing the dimensionality of this data to a handful of variables which explain as much of the variation in roll-call voting as possible.
+
+**Multidimensional scaling techniques** can be used to perform this feat. The technical details of this specific application are beyond the scope of this class, but Keith Poole and Howard Rosenthal developed a specific procedure called [NOMINATE](http://voteview.org/) to reduce the dimensionality of the data. Rather than using $p$ predictors to explain or predict individual legislator's roll-call votes, where $p$ is the total number of roll-call votes in the recorded history of the U.S. Congress, Poole and Rosenthal examined the similarity of legislators' votes in a given session of Congress and over time to identify two major dimensions to roll-call voting in the U.S. Congress. That is, roll-call votes in Congress can generally be explained by two variables that can be estimated for every past and present member of Congress. The two dimensions do not have any inherent substantive interpretation, but by graphically examining the two dimensions, it becomes clear that they represent two specific factors in legislative voting:
+
+1. First dimension - political ideology. This dimension appears to represent political ideology on the liberal-conservative spectrum. Positive values on this dimension refer to increasingly conservative voting patterns, and negative values refer to increasingly liberal voting patterns.
+1. Second dimension - "issue of the day". This dimension appears to pick up on attitudes that are salient at different points in the nation's history. They could be regional differences (Southern vs. non-Southern states), or attitudes towards specific policy issues (i.e. slavery).
+
+This data can be used for a wide range of research questions. For example, we could use it to assess the degree of polarization in the U.S. Congress over time:
+
+```{r polarize-house, fig.caption = "Source: Voteview.org"}
+knitr::include_graphics("images/house_party_means_1879-2015.png")
+```
+
+```{r polarize-house2, fig.caption = "Source: Voteview.org"}
+knitr::include_graphics("images/house_party_means_1879-2015_2nd.png")
+```
+
+```{r polarize-senate, fig.caption = "Source: Voteview.org"}
+knitr::include_graphics("images/senate_party_means_1879-2015.png")
+```
+
+```{r polarize-senate2, fig.caption = "Source: Voteview.org"}
+knitr::include_graphics("images/senate_party_means_1879-2015_2nd.png")
+```
+
+### Singular value decomposition
+
+**Singular-Value Decomposition**, or SVD, is a matrix decomposition method for reducing a matrix to its constitutent parts in order to make subsequent matrix calculations simpler. Unlike LU decomposition, SVD works with any rectangular matrix (not just square matricies). Suppose $\mathbf{M}$ is an $m \times n$ matrix. There exists a factorization of the form
+
+$$\mathbf{M} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^{*}$$
+
+where
+
+* $\mathbf{U}$ is an $m \times n$ matrix
+* $\boldsymbol{\Sigma}$ is an $n \times n$ diagonal matrix
+* $\mathbf{V}^{*}$ is the transpose of an $n \times n$ matrix
+
+The diagonal entries $\sigma_i$ of $\boldsymbol{\Sigma}$ are known as the **singular values** of $\mathbf{M}$. The columns of $\mathbf{U}$ are called the **left-singular vectors** of $\mathbf{M}$, and the columns of V are called the **right-singular vectors** of $\mathbf{M}$.
+
+#### Image compression
+
+[See here for original example](http://www.aaronschlegel.com/image-compression-with-singular-value-decomposition/).
+
+Digital images can be compressed using this technique. The image is treated as a matrix of pixels with corresponding color values and is decomposed into smaller **ranks** (i.e. columns) that retain only the essential information that comprises the image.
+
+```{r plot-svd}
+svd.rank <- function(svd.out, j) {
+  svd.out$u[, 1:j] %*% diag(svd.out$d[1:j]) %*% t(svd.out$v[, 1:j])
+}
+
+svd.plot <- function(svd.out, j) {
+  svd.rank(svd.out, j) %>%
+    as_tibble() %>%
+    mutate(row = row_number()) %>%
+    gather(column, value, -row) %>%
+    mutate(column = parse_number(column)) %>%
+    ggplot(aes(row, -column, fill = value)) +
+    geom_raster() +
+    ggtitle(str_c("Rank", j, sep = " ")) +
+    scale_fill_continuous(high = "white", low = "black", guide = "none") +
+    theme_void()
+}
+```
+
+```{r read-image}
+library(imager)
+
+lion <- load.image("images/lion.jpg") %>%
+  grayscale()
+
+svd.plot(svd(lion), ncol(lion)) +
+  ggtitle(NULL)
+```
+
+The picture of the lion can be stored as an `r nrow(lion)` by `r ncol(lion)` matrix, where each value is a number between 0 and 1 that indicates how white or black the pixel should appear.
+
+```{r str-lion}
+# first rows and columns of R
+lion[1:5, 1:5]
+```
+
+SVD of this matrix results in 3 new matricies:^[First five rows and columns shown only.]
+
+```{r svd}
+lion.svd <- svd(lion)
+
+lion.svd$u[1:5, 1:5]
+diag(lion.svd$d)[1:5, 1:5]
+lion.svd$v[1:5, 1:5]
+```
+
+#### Interesting properties of SVD
+
+##### Recovering the data
+
+We can recover the original matrix by multiplying the matricies back together:
+
+$$\mathbf{M} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^{*}$$
+
+```{r svd-recombine}
+svd.rank(lion.svd, j = ncol(lion))[1:5, 1:5]
+```
+
+##### Reducing the data
+
+The next useful property of SVD is the values in the diagonal matrix $\Sigma$. Notice how they are sorted in descending order.
+
+```{r svd-sigma-descend}
+lion.svd$d
+```
+
+These tell us the relative importance of each column in $\mathbf{U}$ and $\mathbf{V}^{*}$. When their values are multiplied by really small numbers (or even 0), then they do not contribute much information. In the original image we have `r ncol(lion)` columns. What if we want to represent as much of the original information as possible, in a more compact form?
+
+```{r svd-sigma-prop}
+tibble(
+  sigma2 = lion.svd$d^2,
+  prop = sigma2 / sum(sigma2)
+) %>%
+  mutate(row = row_number()) %>%
+  ggplot(aes(row, prop)) +
+  geom_col() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    x = expression(sigma[i]),
+    y = "Percentage of variance explained"
+  )
+```
+
+The first column alone explains over `r prop.table(lion.svd$d^2)[1] * 100`% of the variation in the original matrix. What if we just used the first two columns to redraw the picture?
+
+```{r lions-rank1}
+svd.rank(lion.svd, 2)[1:5, 1:5]
+svd.plot(lion.svd, 2)
+```
+
+Okay, that doesn't appear to be enough. What is the fewest we could get away with?
+
+```{r lions-rank-all}
+map(.x = seq(from = 2, to = height(lion)), .f = svd.rank, svd.out = lion.svd) %>%
+  map(~ as_tibble(.x) %>%
+        mutate(row = row_number()) %>%
+        gather(column, value, -row) %>%
+        mutate(column = parse_number(column))) %>%
+  bind_rows(.id = "rank") %>%
+  ggplot(aes(row, -column, fill = value)) +
+  geom_raster() +
+  scale_fill_continuous(high = "white", low = "black", guide = "none") +
+  ggtitle("Rank {current_frame}") +
+  theme_void() +
+  transition_manual(frames = rank)
+```
+
+> "Rank 150" means retaining only the first 150 columns from all of matricies in the SVD.
+
+Rank 173 doesn't look too bad, and Rank 215 looks pretty indistinguishable from the original. The original matrix contained `r nrow(lion) * ncol(lion)` different values in the matrix. If we used SVD to compress the image and only use the first 215 columns of each individual matrix, we would shrink the size of the image by 28%.
+
+#### Dimension reduction
+
+**Principal components analysis** (PCA) is a basic technique for dimension reduction. The goal is to find a low-dimensional representation of the data that contains as much as possible of the variation. So for example, say your original dataset had 30 columns (i.e. variables, dimensions). We want to reduce the number of columns while still maintaining the overall structure of the matrix.
+
+### Calculating the PCA
+
+The PCA algorithm is implemented as:
+
+1. Rescale each column to be mean 0 and standard deviation 1. This prevents variables with larger values and variances from dominating the projection.
+1. Compute the covariance matrix $\mathbf{S}$. Here $\mathbf{X}$ is a data matrix:
+    $$\mathbf{S} = \dfrac{1}{N} \mathbf{X}' \mathbf{X}$$
+1. Compute the $K$ largest **eigenvectors** of $\mathbf{S}$. These eigenvectors are the principal components of the dataset. Remember that every eigenvector has a corresponding **eigenvalue**. The eigenvector defines the direction of the line, and the eigenvalue tells you how much variance there is in the data in that direction (essentially how spread out the data is on that line).
+
+Computing the covariance matrix is expensive when $\mathbf{X}$ is very large or when $\mathbf{X}$ is very small. SVD can be used to make this process more efficient by computing SVD on the original matrix. $\mathbf{V}^{*}$ contains the **principal directions** (or the eigenvectors), the columns of $\mathbf{U} \boldsymbol{\Sigma}$ are **principal components** (scores) for each observation, and the values of the diagonal elements of $\boldsymbol{\Sigma}$ are equivalent to the eigenvalues computed from $\mathbf{S}$ (amount of variance explained by the principal components).
+
+The total number of principal components for a given $n \times p$ data set is $\min(n,p)$, either the number of observations in the data or the number of variables in the data (whichever is smaller). Once we estimate the principal components, we can plot them against each other in order to produce a low-dimensional visualization of the data. Let's look at the use of PCA on the `USArrests` dataset, reproduced from **An Introduction to Statistical Learning**.
+
+```{r pca-usarrests}
+pr.out <- prcomp(USArrests, scale = TRUE)
+
+head(pr.out$x)
+pr.out$rotation
+biplot(pr.out, scale = 0, cex = .6)
+```
+
+The principal component score vectors have length $n=50$ and the principal component loading vectors have length $p=4$ (in this data set, $p < n$). The biplot visualizes the relationship between the first two principal components for the dataset, including both the scores and the loading vectors. The first principal component places approximately equal weight on murder, assault, and rape. We can tell this because these vectors' length on the first principal component dimension are roughly the same, whereas the length for urban population is smaller. Conversely, the second principal component (the vertical axis) places more emphasis on urban population. Intuitively this makes sense because murder, assault, and rape are all measures of violent crime, and it makes sense that they should be correlated with one another (i.e. states with high murder rates are likely to have high rates of rape as well).
+
+We can also interpret the plot for individual states based on their positions along the two dimensions. States with large positive values on the first principal component have high crime rates while states with large negative values have low crime rates; states with large positive values on the second principal component have high levels of urbanization while states with large negative values have low levels of urbanization.
+
+## Acknowledgements {--}
+
+* [A Gentle Introduction to Singular-Value Decomposition for Machine Learning](https://machinelearningmastery.com/singular-value-decomposition-for-machine-learning/)
+* ESL ch 14.5
+* [Examples of SVD](https://stats.idre.ucla.edu/r/codefragments/svd_demos/)
+* [Singular Value Decomposition (SVD): Tutorial Using Examples in R](https://www.displayr.com/singular-value-decomposition-in-r/)
+* [Relationship between SVD and PCA. How to use SVD to perform PCA?](https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca)
+* [Decoding Dimensionality Reduction, PCA and SVD](http://bigdata-madesimple.com/decoding-dimensionality-reduction-pca-and-svd/)
